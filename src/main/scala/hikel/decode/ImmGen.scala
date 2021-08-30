@@ -3,7 +3,7 @@ package hikel.decode
 import chisel3._
 import chisel3.util._
 
-import InstDecode._
+import hikel.decode.InstDecode._
 
 object ImmGen {
 	def apply(xlen: Int) = new ImmGen(xlen)
