@@ -3,13 +3,12 @@ package hikel.decode
 import chisel3._
 import chisel3.util._
 
+import hikel.Config._
+
 import hikel.decode.InstDecode._
 
-object ImmGen {
-	def apply(xlen: Int) = new ImmGen(xlen)
-}
-
-class ImmGen(val xlen: Int) extends Module {
+// extract 32bit immediate from instruction
+class ImmGen extends Module {
 	val io = IO(new Bundle {
 		val inst = Input(UInt(INST_LEN.W))
 		val itype = Input(UInt(3.W))
@@ -52,5 +51,5 @@ class ImmGen(val xlen: Int) extends Module {
 	val imm32 = MuxLookup(io.itype, 0.U(32.W), table)
 
 	// signed extends immediate 
-	io.imm := Cat(Fill(xlen - 32, imm32(31)), imm32)
+	io.imm := Cat(Fill(MXLEN - 32, imm32(31)), imm32)
 }

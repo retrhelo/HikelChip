@@ -20,7 +20,7 @@ class AluTest extends FlatSpec with ChiselScalatestTester with Matchers {
 
 	behavior of "AluTest"
 	it should "test ALU" in {
-		test(new Alu(64)) { c => 
+		test(new Alu) { c => 
 			// initialization 
 			c.io.arith.poke(false.B)
 			c.io.word.poke(false.B)

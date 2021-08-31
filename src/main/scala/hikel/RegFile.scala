@@ -3,11 +3,13 @@ package hikel
 import chisel3._
 import chisel3.util._
 
+import hikel.Config.MXLEN
+
 object RegFile {
 	val REG_NUM = 32
 }
 
-class RegFile(val xlen: Int) extends Module {
+class RegFile extends Module {
 	import RegFile._
 
 	val io = IO(new Bundle {
@@ -15,14 +17,14 @@ class RegFile(val xlen: Int) extends Module {
 		val rs2 		= Input(UInt(log2Ceil(REG_NUM).W))
 		val rd 			= Input(UInt(log2Ceil(REG_NUM).W))
 		val reg_wen 	= Input(Bool())
-		val rd_data 	= Input(UInt(xlen.W))
+		val rd_data 	= Input(UInt(MXLEN.W))
 
-		val rs1_data 	= Output(UInt(xlen.W))
-		val rs2_data 	= Output(UInt(xlen.W))
+		val rs1_data 	= Output(UInt(MXLEN.W))
+		val rs2_data 	= Output(UInt(MXLEN.W))
 	})
 
-	// val regfile = RegInit(VecInit((REG_NUM).U, 0.U(xlen.W)))
-	val regfile = Mem(REG_NUM, UInt(xlen.W))
+	// val regfile = RegInit(VecInit((REG_NUM).U, 0.U(MXLEN.W)))
+	val regfile = Mem(REG_NUM, UInt(MXLEN.W))
 	regfile(0) := 0.U
 
 	// read regfile
@@ -38,5 +40,5 @@ class RegFile(val xlen: Int) extends Module {
 import chisel3.stage.ChiselStage
 
 object RegFileGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new RegFile(64))
+	(new ChiselStage).emitVerilog(new RegFile)
 }
