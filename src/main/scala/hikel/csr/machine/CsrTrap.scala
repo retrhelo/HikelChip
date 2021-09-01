@@ -50,6 +50,8 @@ class MStatus extends CsrReg(MSTATUS) {
 	}
 	read_vec(MStatus.MIE) := mie
 	read_vec(MStatus.MPIE) := mpie
+	read_vec(MStatus.MPP+1) := true.B
+	read_vec(MStatus.MPP) := true.B
 	io.read := read_vec.asUInt
 
 	when (io.trap_wen) {
