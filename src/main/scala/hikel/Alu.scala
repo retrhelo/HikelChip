@@ -44,16 +44,18 @@ class SimpleAlu extends Module {
 	))
 }
 
+class AluPort extends Bundle {
+	val op = Input(UInt(3.W))
+	val arith = Input(Bool())		// arithmetic
+	val word = Input(Bool())		// word operation
+	val in0 = Input(UInt(MXLEN.W))
+	val in1 = Input(UInt(MXLEN.W))
+	val shmt = Input(UInt(log2Ceil(MXLEN).W))
+	val result = Output(UInt(MXLEN.W))
+}
+
 class Alu extends Module {
-	val io = IO(new Bundle {
-		val op = Input(UInt(3.W))
-		val arith = Input(Bool())		// arithmetic
-		val word = Input(Bool())			// word operation 
-		val in0 = Input(UInt(MXLEN.W))
-		val in1 = Input(UInt(MXLEN.W))
-		val shmt = Input(UInt(log2Ceil(MXLEN).W))
-		val result = Output(UInt(MXLEN.W))
-	})
+	val io = IO(new AluPort)
 
 	// in case of sub, io.arith is asserted 
 	val in1 = Mux(io.arith, ~io.in1+1.U, io.in1)
