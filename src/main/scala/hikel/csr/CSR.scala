@@ -140,7 +140,7 @@ class Csr(val hartid: Int) extends Module {
 }
 
 // the general interface for CsrReg
-class CsrRegBundle extends Bundle {
+class CsrPort extends Bundle {
 	val addr = Input(UInt(ADDR_LEN.W))
 	val wen = Input(Bool())
 	val data = Input(UInt(MXLEN.W))
@@ -150,7 +150,7 @@ class CsrRegBundle extends Bundle {
 
 // general abstraction of csr regsiters
 abstract class CsrReg(val csr_addr: Int) extends Module {
-	lazy val io = IO(new CsrRegBundle)
+	lazy val io = IO(new CsrPort)
 
 	val writable = READ_ONLY =/= io.addr(11, 10)
 	val sel = csr_addr.U === io.addr
@@ -164,6 +164,7 @@ abstract class CsrReg(val csr_addr: Int) extends Module {
 
 
 import chisel3.stage.ChiselStage
+import hikel.Config.BUILD_ARG
 object CsrGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Csr(1))
+	(new ChiselStage).emitVerilog(new Csr(0), BUILD_ARG)
 }

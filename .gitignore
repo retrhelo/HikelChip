@@ -340,9 +340,7 @@ project/plugins/project/
 hs_err_pid*
 
 # generated files 
-*.v
-*.fir
-*.anno.json
+/vbuild
 
 # scala language server 
 /.bloop

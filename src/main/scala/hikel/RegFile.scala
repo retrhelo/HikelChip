@@ -29,6 +29,7 @@ class RegFile extends Module {
 
 
 import chisel3.stage.ChiselStage
+import hikel.Config.BUILD_ARG
 object RegFileGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new RegFile)
+	(new ChiselStage).emitVerilog(new RegFile, BUILD_ARG)
 }

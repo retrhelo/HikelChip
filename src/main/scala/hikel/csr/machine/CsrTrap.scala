@@ -9,7 +9,7 @@ import hikel.Config.MXLEN
 
 import hikel.csr.Csr._
 import hikel.csr.CsrReg
-import hikel.csr.CsrRegBundle
+import hikel.csr.CsrPort
 
 object MStatus {
 	val SIE 	= 1
@@ -33,7 +33,7 @@ object MStatus {
 	val SD 		= MXLEN - 1
 }
 
-class MStatusBundle extends CsrRegBundle {
+class MStatusBundle extends CsrPort {
 	val trap_wen = Input(Bool())
 	val trap_data = Input(UInt(MXLEN.W))
 }
@@ -108,7 +108,7 @@ class MScratch extends CsrReg(MSCRATCH) {
 	}
 }
 
-class MEpcBundle extends CsrRegBundle {
+class MEpcBundle extends CsrPort {
 	val trap_wen = Input(Bool())
 	val trap_data = Input(UInt((MXLEN-1).W))
 }
@@ -160,7 +160,7 @@ object MCause {
 	val STORE_PAGEFAULT 		= 15.U(EXCP_LEN.W)
 }
 
-class MCauseBundle extends CsrRegBundle {
+class MCauseBundle extends CsrPort {
 	val trap_wen = Input(Bool())
 	// Exception Code
 	val trap_excp_code = Input(UInt(MCause.EXCP_LEN.W))
@@ -183,7 +183,7 @@ class MCause extends CsrReg(MCAUSE) {
 	}
 }
 
-class MtValBundle extends CsrRegBundle {
+class MtValBundle extends CsrPort {
 	val trap_wen = Input(Bool())
 	val trap_data = Input(UInt(MXLEN.W))
 }
@@ -235,7 +235,7 @@ class Mie extends CsrReg(MIE) {
 	}
 }
 
-class MipBundle extends CsrRegBundle {
+class MipBundle extends CsrPort {
 	val msip = Input(Bool())
 	val mtip = Input(Bool())
 	val meip = Input(Bool())
