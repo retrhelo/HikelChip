@@ -7,13 +7,15 @@ import hikel.Config._
 
 import hikel.decode.InstDecode._
 
+class ImmGenPort extends Bundle {
+	val inst 	= Input(UInt(INST.W))
+	val itype 	= Input(UInt(3.W))
+	val imm32 	= Output(UInt(32.W))
+}
+
 // extract 32bit immediate from instruction
-class ImmGen extends Module {
-	val io = IO(new Bundle {
-		val inst = Input(UInt(INST_LEN.W))
-		val itype = Input(UInt(3.W))
-		val imm = Output(UInt(32.W))
-	})
+class ImmGen extends RawModule {
+	val io = IO(new ImmGenPort)
 
 	val i_imm32 = Cat(
 		Fill(21, io.inst(31)), 
@@ -40,16 +42,21 @@ class ImmGen extends Module {
 	val csr_imm32 = Cat(Fill(27, 0.U), io.inst(19, 15))
 
 	// select among different instruction types 
-	val table = Array(
-		I_TYPE -> i_imm32, 
-		S_TYPE -> s_imm32, 
-		B_TYPE -> b_imm32, 
-		U_TYPE -> u_imm32, 
-		J_TYPE -> j_imm32, 
-		CSR_TYPE -> csr_imm32, 
-	)
-	val imm32 = MuxLookup(io.itype, 0.U(32.W), table)
+	// val table = Array(
+	// 	I_TYPE -> i_imm32, 
+	// 	S_TYPE -> s_imm32, 
+	// 	B_TYPE -> b_imm32, 
+	// 	U_TYPE -> u_imm32, 
+	// 	J_TYPE -> j_imm32, 
+	// 	CSR_TYPE -> csr_imm32, 
+	// )
 
-	// signed extends immediate 
-	io.imm := Cat(Fill(MXLEN - 32, imm32(31)), imm32)
+	// io.imm32 := MuxLookup(io.itype, 0.U, table)
+}
+
+
+import chisel3.stage.ChiselStage
+import hikel.Config.BUILD_ARG
+object ImmGenGenVerilog extends App {
+	(new ChiselStage).emitVerilog(new ImmGen, BUILD_ARG)
 }

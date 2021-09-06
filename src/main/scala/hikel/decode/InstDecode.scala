@@ -1,16 +1,50 @@
+// decode input instruction
+
 package hikel.decode
 
 import chisel3._
+import chisel3.util._
+
+import freechips.rocketchip.rocket.Instructions._
+
+import hikel.Config._
 
 object InstDecode {
-	val INST_LEN = 32
+	val X = BitPat("b?")
+	val Y = BitPat("b1")
+	val N = BitPat("b0")
 
-	// different types of instructions
-	val ILL_TYPE 	= 0.U(3.W)
-	val I_TYPE 		= 1.U(3.W)
-	val S_TYPE 		= 2.U(3.W)
-	val B_TYPE 		= 3.U(3.W)
-	val U_TYPE 		= 4.U(3.W)
-	val J_TYPE 		= 5.U(3.W)
-	val CSR_TYPE 	= 7.U(3.W)
+	//               illegal
+	//                 |
+	// val default = List(Y, )
+}
+
+class InstDecodeIn extends Bundle {
+	val inst = UInt(INST.W)
+}
+
+class InstDecodeOut extends Bundle {
+	val lui 		= Bool()
+	val auipc 		= Bool()
+	val jal 		= Bool()
+	val jalr 		= Bool()
+	val branch 		= Bool()
+	val lsu_ren 	= Bool()
+	val lsu_wen 	= Bool()
+	val csr_en 		= Bool()	// when use csr, it's always written
+}
+
+class InstDecode extends RawModule {
+	val io = IO(new Bundle {
+		val in = new InstDecodeIn
+		val out = new InstDecodeOut
+	})
+
+
+}
+
+
+import chisel3.stage.ChiselStage
+object InstDecodeGenVerilog extends App {
+	(new ChiselStage).emitVerilog(new InstDecode, BUILD_ARG)
 }
