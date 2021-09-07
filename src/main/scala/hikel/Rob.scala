@@ -17,9 +17,8 @@ class RobOut extends Bundle {
 }
 
 class RobCommit extends Bundle {
-	val uop 	= Input(new MicroOp)
 	val valid 	= Input(Bool())
-	val num 	= Input(UInt(Rob.ADDR.W))
+	val id 		= Input(UInt(Rob.ADDR.W))
 }
 
 object Rob {

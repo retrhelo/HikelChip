@@ -8,6 +8,8 @@ import hikel.Config._
 class ScoreBoardPort extends Bundle {
 	val rs1_addr 	= Input(UInt(RegFile.ADDR.W))
 	val rs2_addr 	= Input(UInt(RegFile.ADDR.W))
+	val rs1_use 	= Input(Bool())
+	val rs2_use 	= Input(Bool())
 	// the address to lock
 	val rd_addr 	= Input(UInt(RegFile.ADDR.W))
 
@@ -21,15 +23,16 @@ class ScoreBoardPort extends Bundle {
 }
 
 class ScoreBoardCommit extends Bundle {
-	val rd_addr 	= Input(UInt(RegFile.ADDR.W))
-	val csr_use 	= Input(Bool())
-	val lsu_use 	= Input(Bool())
+	val rd_addr 	= UInt(RegFile.ADDR.W)
+	val rd_wen 		= Bool()
+	val csr_use 	= Bool()
+	val lsu_use 	= Bool()
 }
 
 class ScoreBoard extends Module {
 	val io = IO(new Bundle {
 		val ports = Vec(Rob.NUM, new ScoreBoardPort)
-		val commit = new ScoreBoardCommit
+		val commit = Input(new ScoreBoardCommit)
 	})
 
 	val reg_avail 	= RegInit(VecInit(Seq.fill(RegFile.NUM)(true.B)))
