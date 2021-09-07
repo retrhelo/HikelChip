@@ -42,16 +42,16 @@ class ImmGen extends RawModule {
 	val csr_imm32 = Cat(Fill(27, 0.U), io.inst(19, 15))
 
 	// select among different instruction types 
-	// val table = Array(
-	// 	I_TYPE -> i_imm32, 
-	// 	S_TYPE -> s_imm32, 
-	// 	B_TYPE -> b_imm32, 
-	// 	U_TYPE -> u_imm32, 
-	// 	J_TYPE -> j_imm32, 
-	// 	CSR_TYPE -> csr_imm32, 
-	// )
+	val table = Array(
+		IMM_I -> i_imm32, 
+		IMM_S -> s_imm32, 
+		IMM_B -> b_imm32, 
+		IMM_U -> u_imm32, 
+		IMM_J -> j_imm32, 
+		IMM_Z -> csr_imm32, 
+	)
 
-	// io.imm32 := MuxLookup(io.itype, 0.U, table)
+	io.imm32 := MuxLookup(io.itype, 0.U, table)
 }
 
 
