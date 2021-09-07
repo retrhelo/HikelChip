@@ -1,9 +1,0 @@
-[submodule "libraries/difftest"]
-	path = libraries/difftest
-	url = https://gitee.com/oscpu/difftest.git
-[submodule "libraries/DRAMsim3"]
-	path = libraries/DRAMsim3
-	url = https://gitee.com/oscpu/DRAMsim3.git
-[submodule "libraries/NEMU"]
-	path = libraries/NEMU
-	url = https://gitee.com/oscpu/NEMU.git

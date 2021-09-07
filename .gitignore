@@ -62,7 +62,7 @@ _xmsgs/
 *.pydevproject
 .metadata
 .gradle
-bin/
+; bin/
 tmp/
 *.tmp
 *.bak
@@ -340,7 +340,7 @@ project/plugins/project/
 hs_err_pid*
 
 # generated files 
-/vbuild
+/src/test/verilator/vsrc
 
 # scala language server 
 /.bloop
