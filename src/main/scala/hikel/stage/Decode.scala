@@ -16,12 +16,6 @@ class DecodePortIn extends StagePortIn {
 
 class DecodePort extends StagePort {
 	override lazy val in = new DecodePortIn
-	override lazy val out = Flipped(new IssuePortIn)
-
-	// connect to regfile
-	val regfile = Flipped(new RegFileRead)
-
-	// connect to CSR
 }
 
 class Decode extends Stage {

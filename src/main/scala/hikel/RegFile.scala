@@ -6,7 +6,7 @@ import chisel3.util._
 import hikel.Config._
 
 object RegFile {
-	val NUM 	= 32
+	val NUM 	= 32 + Rob.NUM
 	val ADDR 	= log2Ceil(NUM)
 }
 
