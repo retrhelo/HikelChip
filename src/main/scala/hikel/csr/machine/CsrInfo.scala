@@ -5,7 +5,7 @@ import chisel3.util._
 
 import hikel.csr.Csr._
 import hikel.csr.CsrReg
-import hikel.csr.CsrRegBundle
+import hikel.csr.CsrPort
 
 class MVendorId extends CsrReg(MVENDORID) {
 	io.read := 0.U

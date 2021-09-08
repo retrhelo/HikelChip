@@ -6,7 +6,7 @@ import chisel3.util._
 import hikel.Config.MXLEN
 
 object Csr {
-	val ADDR_LEN 	= 12
+	val ADDR 		= 12
 
 	// code of different privilege level
 	val MACHINE 	= "b11".U
@@ -37,6 +37,13 @@ object Csr {
 	val MTVAL 			= 0x343
 	val MIP 			= 0x344
 	// to be simple, we give up implementing other csrs for machine level. 
+
+	// csr writting command
+	val CMD 			= 2
+	val CSR_NONE 		= "b00".U
+	val CSR_WRITE 		= "b01".U
+	val CSR_SET 		= "b10".U
+	val CSR_CLEAR 		= "b11".U
 }
 
 import Csr._
@@ -44,12 +51,8 @@ import hikel.csr.machine._
 
 class Csr(val hartid: Int) extends Module {
 	val io = IO(new Bundle {
-		val addr = Input(UInt(ADDR_LEN.W))
+		val addr = Input(UInt(ADDR.W))
 		val data = Input(UInt(MXLEN.W))
-		// csr writting
-		// 01 - set
-		// 10 - clear
-		// 11 - write
 		val csr_cmd = Input(UInt(2.W))
 
 		val legal = Output(Bool())
@@ -76,8 +79,8 @@ class Csr(val hartid: Int) extends Module {
 	})
 
 	val wen = io.csr_cmd.orR
-	val csr_data = Mux("b01".U === io.csr_cmd, io.read | io.data, 
-			Mux("b10".U === io.csr_cmd, io.read & ~(io.data), io.data))
+	val csr_data = Mux(CSR_SET === io.csr_cmd, io.read | io.data, 
+			Mux(CSR_CLEAR === io.csr_cmd, io.read & ~(io.data), io.data))
 
 	io.legal := false.B
 	io.read := 0.U
@@ -140,8 +143,8 @@ class Csr(val hartid: Int) extends Module {
 }
 
 // the general interface for CsrReg
-class CsrRegBundle extends Bundle {
-	val addr = Input(UInt(ADDR_LEN.W))
+class CsrPort extends Bundle {
+	val addr = Input(UInt(ADDR.W))
 	val wen = Input(Bool())
 	val data = Input(UInt(MXLEN.W))
 	val legal = Output(Bool())
@@ -150,7 +153,7 @@ class CsrRegBundle extends Bundle {
 
 // general abstraction of csr regsiters
 abstract class CsrReg(val csr_addr: Int) extends Module {
-	lazy val io = IO(new CsrRegBundle)
+	lazy val io = IO(new CsrPort)
 
 	val writable = READ_ONLY =/= io.addr(11, 10)
 	val sel = csr_addr.U === io.addr
@@ -164,6 +167,7 @@ abstract class CsrReg(val csr_addr: Int) extends Module {
 
 
 import chisel3.stage.ChiselStage
+import hikel.Config.BUILD_ARG
 object CsrGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Csr(1))
+	(new ChiselStage).emitVerilog(new Csr(0), BUILD_ARG)
 }
