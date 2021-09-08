@@ -340,7 +340,7 @@ project/plugins/project/
 hs_err_pid*
 
 # generated files 
-/src/test/verilator/vsrc
+/src/test/verilator/vsrc/
 
 # scala language server 
 /.bloop

@@ -6,15 +6,13 @@ import chisel3.util._
 import hikel.Config._
 
 object RegFile {
-	val NUM 	= 32 + Rob.NUM
+	val NUM 	= 32
 	val ADDR 	= log2Ceil(NUM)
 }
 
 class RegFileRead extends Bundle {
-	val rs1_addr 	= Input(UInt(RegFile.ADDR.W))
-	val rs2_addr 	= Input(UInt(RegFile.ADDR.W))
-	val rs1_data 	= Output(UInt(MXLEN.W))
-	val rs2_data 	= Output(UInt(MXLEN.W))
+	val addr 	= Input(UInt(RegFile.ADDR.W))
+	val data 	= Output(UInt(MXLEN.W))
 }
 
 class RegFileWrite extends Bundle {
@@ -24,7 +22,7 @@ class RegFileWrite extends Bundle {
 }
 
 class RegFilePort extends Bundle {
-	val read = new RegFileRead
+	val read = Vec(2, new RegFileRead)
 	val write = new RegFileWrite
 }
 
@@ -32,17 +30,23 @@ class RegFile extends Module {
 	val io = IO(new RegFilePort)
 
 	val regfile = Reg(Vec(RegFile.NUM, UInt(MXLEN.W)))
-	io.read.rs1_data := Mux(io.read.rs1_addr.orR, 0.U, regfile(io.read.rs1_addr))
-	io.read.rs2_data := Mux(io.read.rs2_addr.orR, 0.U, regfile(io.read.rs2_addr))
 
-	when (io.write.rd_wen && io.write.rd_addr.orR) {
+	// read
+	for (i <- 0 until 2) {
+		val read = io.read(i)
+		read.data := Mux(read.addr.orR, 0.U, regfile(read.addr))
+	}
+
+	when (io.write.rd_wen) {
 		regfile(io.write.rd_addr) := io.write.rd_data
 	}
+
+	// hardwire x0 to zero
+	regfile(0) := 0.U
 }
 
 
 import chisel3.stage.ChiselStage
-import hikel.Config.BUILD_ARG
 object RegFileGenVerilog extends App {
 	(new ChiselStage).emitVerilog(new RegFile, BUILD_ARG)
 }

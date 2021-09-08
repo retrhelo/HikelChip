@@ -109,8 +109,8 @@ class InstDecodeOut extends Bundle {
 
 	val rd_wen 		= Bool()
 	val imm_type 	= UInt(3.W)
-	val rs2_sel 	= Bool() 	// use imm instead of rs2?
-	val rs1_sel 	= Bool()	// do use rs1?
+	val rs1_use 	= Bool()	// do use rs1?
+	val rs2_use 	= Bool() 	// use imm instead of rs2?
 }
 
 class InstDecode extends RawModule {
@@ -135,8 +135,8 @@ class InstDecode extends RawModule {
 	io.out.fence 	:= list(11)
 	io.out.rd_wen 	:= list(12)
 	io.out.imm_type := list(13)
-	io.out.rs2_sel 	:= list(14)
-	io.out.rs1_sel 	:= list(15)
+	io.out.rs2_use 	:= list(14)
+	io.out.rs1_use 	:= list(15)
 }
 
 

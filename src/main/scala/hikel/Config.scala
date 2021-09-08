@@ -7,7 +7,7 @@ import chisel3.util._
 object Config {
 	val MXLEN 		= 64
 	val SHMT 		= log2Ceil(MXLEN)
-	val IMM 		= 32
+	val IMM 		= MXLEN
 
 	val INST 		= 32
 	val UOP 		= 3

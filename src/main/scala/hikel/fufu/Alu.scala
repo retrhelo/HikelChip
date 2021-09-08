@@ -1,16 +1,15 @@
 // Arithmetic and Logical Unit
 
-package hikel.fu
+package hikel.fufu
 
 import chisel3._
 import chisel3.util._
 
 import hikel.Config._
-import hikel.decode.MicroOp._
 
 class AluPort extends Bundle {
 	val in 		= Input(new Bundle {
-		val op 	= UInt(OP.W)
+		val op 	= UInt(5.W)
 		val in0 = UInt(MXLEN.W)
 		val in1 = UInt(MXLEN.W)
 	})

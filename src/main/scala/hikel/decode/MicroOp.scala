@@ -15,10 +15,6 @@ object MicroOp {
 
 import MicroOp._
 class MicroOp extends Bundle {
-	val pc 			= UInt(PC.W)
-	val code 		= UInt(EXCP_LEN.W)
-	val excp 		= Bool()
-
 	val op 			= UInt(OP.W)
 	val rs1_addr 	= UInt(RegFile.ADDR.W)
 	val rs2_addr 	= UInt(RegFile.ADDR.W)
@@ -46,11 +42,6 @@ class GenMicroOp extends RawModule {
 	val decoder = Module(new InstDecode)
 	decoder.io.inst := io.inst
 
-	// basic informations
-	io.out.pc 		:= io.pc
-	io.out.code 	:= Mux(decoder.io.out.illegal, ILL_INS, 0.U)
-	io.out.excp 	:= decoder.io.out.illegal
-
 	// operator
 	io.out.op := Cat(
 		decoder.io.out.store || decoder.io.out.jal || io.inst(3), 
@@ -61,8 +52,8 @@ class GenMicroOp extends RawModule {
 	io.out.rs1_addr 	:= io.inst(19, 15)
 	io.out.rs2_addr 	:= io.inst(24, 20)
 
-	io.out.rs1_use := decoder.io.out.rs1_sel
-	io.out.rs2_use := decoder.io.out.rs2_sel
+	io.out.rs1_use := decoder.io.out.rs1_use
+	io.out.rs2_use := decoder.io.out.rs2_use
 
 	// immediate
 	val imm_gen = Module(new ImmGen)
