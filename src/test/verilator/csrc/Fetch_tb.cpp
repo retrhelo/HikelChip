@@ -10,14 +10,6 @@
 constexpr int ROM_SIZE = 16;
 uint32_t inst_rom[ROM_SIZE];
 
-#define __assert(cond) do {\
-	if (__glibc_likely(cond)) ; \
-	else { \
-		printf("failed at %d\n", __LINE__); \
-		exit(-1); \
-	} \
-} while (0)
-
 int load_inst(char *filename, uint32_t *buf, int size) {
 	FILE *fp = fopen(filename, "rb");
 
