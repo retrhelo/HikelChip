@@ -23,5 +23,5 @@ jobs:
         uses: coursier/cache-action@v5
       - name: SBT Test
         run: sbt test
-      - name: mill Test
-        run: mill _.test
+      # - name: mill Test
+      #   run: mill _.test
