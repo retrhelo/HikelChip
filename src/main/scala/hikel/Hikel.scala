@@ -77,12 +77,12 @@ class Hikel extends Module {
 
 	// decode
 	decode.io.enable := true.B
-	decode.io.clear := false.B
+	decode.io.clear := brcond.io.change_pc
 	decode.io.trap := false.B
 
 	// issue
 	issue.io.enable := true.B
-	issue.io.clear := false.B
+	issue.io.clear := brcond.io.change_pc
 	issue.io.trap := false.B
 
 	// execute

@@ -92,9 +92,11 @@ class Issue extends Stage {
 					io.exec_rd_addr === reg_rs1_addr
 			val commit_conflict = rs1_redir && io.commit_rd_wen && 
 					io.commit_rd_addr === reg_rs1_addr
-			Mux(exec_conflict, io.exec_rd_data, 
+			val rs1 = Mux(exec_conflict, io.exec_rd_data, 
 					Mux(commit_conflict, io.commit_rd_data, 
 					io.regfile_read(0).data))
+
+			Mux(reg_rs1_use, rs1, io.out.pc)
 		}
 		val rs2_data = {
 			val rs2_redir = reg_rs2_use && 0.U =/= reg_rs2_addr
@@ -102,9 +104,11 @@ class Issue extends Stage {
 					io.exec_rd_addr === reg_rs2_addr
 			val commit_conflict = rs2_redir && io.commit_rd_wen && 
 					io.commit_rd_addr === reg_rs2_addr
-			Mux(exec_conflict, io.exec_rd_data, 
+			val rs2 = Mux(exec_conflict, io.exec_rd_data, 
 					Mux(commit_conflict, io.commit_rd_data, 
 					io.regfile_read(1).data))
+
+			Mux(reg_rs2_use, rs2, reg_imm)
 		}
 
 		// connect to BrCond

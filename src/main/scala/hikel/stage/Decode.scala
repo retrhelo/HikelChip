@@ -49,16 +49,16 @@ class Decode extends Stage {
 		val imm = Cat(Fill(MXLEN - 32, imm_gen.io.imm32(31)), imm_gen.io.imm32)
 
 		// generate signals used by Issue
-		io.out.rs1_addr 	:= reg_inst(19, 15)
+		io.out.rs1_addr 	:= Mux(decoder.io.out.lui, 0.U, reg_inst(19, 15))
 		io.out.rs1_use 		:= decoder.io.out.rs1_use
 		io.out.rs2_addr 	:= reg_inst(24, 20)
 		io.out.rs2_use 		:= decoder.io.out.rs2_use
 		io.out.imm 			:= imm
 		// Micro-Op
 		io.out.uop := Cat(
-			decoder.io.out.store || decoder.io.out.jal || reg_inst(3), 
-			decoder.io.out.load || decoder.io.out.jalr || reg_inst(30), 
-			reg_inst(14, 12)
+			decoder.io.out.store || decoder.io.out.jal || decoder.io.out.word, 
+			decoder.io.out.load || decoder.io.out.jalr || decoder.io.out.arith, 
+			Mux(decoder.io.out.lui || decoder.io.out.auipc, 0.U, reg_inst(14, 12))
 		)
 		io.out.rd_addr := reg_inst(11, 7)
 		io.out.csr_addr := reg_inst(31, 20)

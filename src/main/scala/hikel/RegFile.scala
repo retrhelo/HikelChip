@@ -34,7 +34,7 @@ class RegFile extends Module {
 	// read
 	for (i <- 0 until 2) {
 		val read = io.read(i)
-		read.data := Mux(read.addr.orR, 0.U, regfile(read.addr))
+		read.data := Mux(read.addr.orR, regfile(read.addr), 0.U)
 	}
 
 	when (io.write.rd_wen) {

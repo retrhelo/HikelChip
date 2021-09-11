@@ -9,13 +9,13 @@
 
 #include "VSimTop.h"
 
-constexpr uint32_t ROM_SIZE = 256;
+constexpr uint32_t ROM_SIZE = 1024;
 uint32_t inst_rom[ROM_SIZE];
 
 constexpr int CYCLE = 10;
 
 int load_inst(char *filename, uint32_t *buf, int size) {
-	printf("loading %s into ROM\n");
+	printf("loading %s into ROM\n", filename);
 	FILE *fp = fopen(filename, "rb");
 
 	if (NULL == fp) {
@@ -31,7 +31,7 @@ VerilatedVcdC *tfp = nullptr;
 
 // close simulation by pressing Ctrl-C
 void term_handler(int signum) {
-	tfp.close();
+	tfp->close();
 
 	delete top;
 	delete tfp;
@@ -42,6 +42,7 @@ void term_handler(int signum) {
 int main(int argc, char **argv) {
 	uint64_t loop = 10;
 
+	printf("argc = %d\n", argc);
 	// pass filename from commandline
 	if (argc >= 3) {
 		loop = atoi(argv[2]);
@@ -50,12 +51,12 @@ int main(int argc, char **argv) {
 			loop = 10;
 		}
 	}
-	else if (argc >= 2) {
+	if (argc >= 2) {
 		// let's load file
 		int read_cnt = load_inst(argv[1], inst_rom, ROM_SIZE);
 		if (read_cnt < 0) {
 			// fail to load
-			printf("fail to load from %s\n", filename);
+			printf("fail to load from %s\n", argv[1]);
 			printf("read_cnt = %d\n", read_cnt);
 			exit(-1);
 		}
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
 	top = new VSimTop;
 	tfp = new VerilatedVcdC;
 	top->trace(tfp, 99);
-	top->open("top.vcd");
+	tfp->open("top.vcd");
 
 	// let's start
 	for (uint64_t i = 0; i < loop * CYCLE; i ++) {	// endless loop but with a counter
@@ -97,13 +98,25 @@ int main(int argc, char **argv) {
 		// read from ROM
 		constexpr uint32_t START_ADDR 	= 0x80000000;
 		constexpr uint32_t END_ADDR 	= START_ADDR + ROM_SIZE * sizeof(uint32_t);
-		if (top->pc >= START_ADDR && top->pc < END_ADDR) {
-			top->icache_ready = 1;
-			top->inst = inst_rom[top->pc >> 2];
+		if (top->io_pc >= START_ADDR && top->io_pc < END_ADDR) {
+			uint32_t offset = top->io_pc - START_ADDR;
+			top->io_inst = inst_rom[offset >> 2];
+			top->io_icache_illegal = 0;
+
+			if (top->io_inst == 0x6b) {
+				printf("An error occurs!\n");
+				tfp->dump(i + CYCLE / 2);
+				tfp->close();
+				delete tfp;
+				delete top;
+				exit(-1);
+			}
 		}
 		else {
-			top->inst = 0;
+			top->io_inst = 0;
+			top->io_icache_illegal = 1;
 		}
+		top->io_icache_ready = 1;	// rom is always ready
 
 		top->eval();
 		tfp->dump(i);

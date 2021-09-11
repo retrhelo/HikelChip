@@ -39,7 +39,7 @@ class BrCond extends RawModule {
 	val do_branch = not ^ Mux(lt, do_lt, do_eql)
 
 	io.change_pc := (do_jump || do_branch) && io.in.sel
-	io.new_pc := Mux(jalr, (io.in.in0 + io.in.imm) & ~1.U, 
+	io.new_pc := Mux(jalr, io.in.in0 + io.in.imm, 
 			io.in.pc + io.in.imm)
 }
 
