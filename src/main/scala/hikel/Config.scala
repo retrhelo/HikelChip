@@ -14,8 +14,8 @@ object Config {
 
 	val PC 			= 32
 
-	val BUILD_ARG 	= Array("-td", "src/test/verilator/vsrc")
+	val BUILD_ARG 	= Array("-td", "./build")
 
 	// add extra instructions to support ysyx tests
-	val YSYX_TEST_OUTPUT 	= false
+	val YSYX_TEST_OUTPUT 	= true
 }

@@ -1,0 +1,4 @@
+[submodule "difftest"]
+	path = difftest
+	url = https://gitee.com/oscpu/difftest.git
+	branch = ysyx

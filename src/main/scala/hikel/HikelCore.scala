@@ -9,10 +9,10 @@ import hikel.Config._
 import hikel.stage._
 import hikel.fufu._
 
-class Hikel extends Module {
-	// genereate desired name for top-level module
-	override def desiredName: String = "SimTop"
+// difftest
+import difftest._
 
+class HikelCore extends Module {
 	val io = IO(new Bundle {
 		val pc 		= Output(UInt(PC.W))
 		val icache_ready 	= Input(Bool())
@@ -94,9 +94,16 @@ class Hikel extends Module {
 	commit.io.enable := true.B
 	commit.io.clear := false.B
 	commit.io.trap := false.B
+
+	// connect to difftest
+	if (YSYX_TEST_OUTPUT) {
+		val difftest = Module(new DifftestArchIntRegState)
+		difftest.io.clock := clock
+		difftest.io.coreid := 0.U
+	}
 }
 
 import chisel3.stage.ChiselStage
 object HikelGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Hikel, BUILD_ARG)
+	(new ChiselStage).emitVerilog(new HikelCore, BUILD_ARG)
 }
