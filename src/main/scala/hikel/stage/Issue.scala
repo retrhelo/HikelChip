@@ -92,11 +92,9 @@ class Issue extends Stage {
 					io.exec_rd_addr === reg_rs1_addr
 			val commit_conflict = rs1_redir && io.commit_rd_wen && 
 					io.commit_rd_addr === reg_rs1_addr
-			val rs1 = Mux(exec_conflict, io.exec_rd_data, 
+			Mux(exec_conflict, io.exec_rd_data, 
 					Mux(commit_conflict, io.commit_rd_data, 
 					io.regfile_read(0).data))
-
-			Mux(reg_rs1_use, rs1, io.out.pc)
 		}
 		val rs2_data = {
 			val rs2_redir = reg_rs2_use && 0.U =/= reg_rs2_addr
@@ -107,7 +105,6 @@ class Issue extends Stage {
 			val rs2 = Mux(exec_conflict, io.exec_rd_data, 
 					Mux(commit_conflict, io.commit_rd_data, 
 					io.regfile_read(1).data))
-
 			Mux(reg_rs2_use, rs2, reg_imm)
 		}
 
@@ -120,10 +117,10 @@ class Issue extends Stage {
 		io.brcond.sel := reg_jb_use
 
 		// connect to next stage
-		io.out.rs1_data 	:= rs1_data
-		io.out.rs2_data 	:= rs2_data
+		io.out.rs1_data 	:= Mux(reg_rs1_use && !reg_jb_use, rs1_data, io.out.pc)
+		io.out.rs2_data 	:= Mux(reg_jb_use, 4.U, rs2_data)
 		io.out.imm 			:= reg_imm
-		io.out.uop 			:= reg_uop
+		io.out.uop 			:= Mux(reg_jb_use, 0.U, reg_uop)
 		io.out.rd_addr 		:= reg_rd_addr
 		io.out.csr_addr 	:= reg_csr_addr
 		io.out.rd_wen 		:= reg_rd_wen

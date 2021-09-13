@@ -13,9 +13,7 @@ import hikel.Config._
 import hikel.decode._
 import hikel.csr.machine._
 
-class DecodePortIn extends StagePortIn {
-	val inst 	= UInt(INST.W)
-}
+class DecodePortIn extends StagePortIn {}
 
 class DecodePort extends StagePort {
 	override lazy val in = Input(new DecodePortIn)

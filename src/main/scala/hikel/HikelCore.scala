@@ -31,6 +31,8 @@ class HikelCore extends Module {
 	fetch.io.in.pc 	:= 0.U
 	fetch.io.in.excp := false.B
 	fetch.io.in.code := 0.U
+	fetch.io.in.valid := true.B
+	fetch.io.in.inst := 0.U
 
 	// hookup
 	decode.io.in <> fetch.io.out
@@ -94,14 +96,8 @@ class HikelCore extends Module {
 	commit.io.enable := true.B
 	commit.io.clear := false.B
 	commit.io.trap := false.B
-
-	// connect to difftest
-	if (YSYX_TEST_OUTPUT) {
-		val difftest = Module(new DifftestArchIntRegState)
-		difftest.io.clock := clock
-		difftest.io.coreid := 0.U
-	}
 }
+
 
 import chisel3.stage.ChiselStage
 object HikelGenVerilog extends App {

@@ -46,12 +46,12 @@ class RegFile extends Module {
 	// hardwire x0 to zero
 	regfile(0) := 0.U
 
-	// for ysyx difftest
-	if (YSYX_TEST_OUTPUT) {
-		val difftest = Module(new DifftestArchIntRegState)
-		difftest.io.clock := clock
-		difftest.io.coreid := 0.U
-		difftest.io.gpr := regfile
+	// difftest
+	val difftest = Module(new DifftestArchIntRegState)
+	difftest.io.clock 		:= clock
+	difftest.io.coreid 		:= 0.U
+	for (i <- 0 until RegFile.NUM) {
+		difftest.io.gpr(i) 	:= regfile(i)
 	}
 }
 

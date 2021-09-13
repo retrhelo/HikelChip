@@ -13,6 +13,8 @@ import hikel.RegFile
 import hikel.RegFileWrite
 import hikel.csr.Csr
 
+import difftest._
+
 class CommitPortIn extends StagePortIn {
 	val rd_addr 	= UInt(RegFile.ADDR.W)
 	val csr_addr 	= UInt(Csr.ADDR.W)
@@ -55,6 +57,48 @@ class Commit extends Stage {
 		io.regfile_write.rd_addr 	:= reg_rd_addr
 		io.regfile_write.rd_data 	:= reg_data1
 		io.regfile_write.rd_wen 	:= reg_rd_wen
+	}
+
+	// for YSYX project
+	if (YSYX_TEST_OUTPUT) {
+		val difftest = Module(new DifftestInstrCommit)
+		difftest.io.clock 	:= clock
+		difftest.io.coreid 	:= 0.U
+		difftest.io.index 	:= 0.U
+
+		// difftest.io.valid 	:= RegNext(!(io.trap || io.in.excp))
+		// difftest.io.valid 	:= true.B
+		difftest.io.valid 	:= RegNext(io.out.pc >= BigInt("80000000", 16).U)
+		difftest.io.pc 		:= RegNext(io.out.pc)
+		difftest.io.instr 	:= RegNext(io.out.inst)
+		difftest.io.skip 	:= false.B
+		difftest.io.skip 	:= false.B
+		difftest.io.isRVC 	:= false.B
+		difftest.io.scFailed := false.B
+
+		difftest.io.wen 	:= RegNext(io.regfile_write.rd_wen)
+		difftest.io.wdata 	:= RegNext(io.regfile_write.rd_data)
+		difftest.io.wdest 	:= RegNext(io.regfile_write.rd_addr)
+
+		// connect to trap
+		{
+			val reg_cycleCnt 	= RegInit(0.U(MXLEN.W))
+			val reg_instrCnt 	= RegInit(0.U(MXLEN.W))
+			// update
+			reg_cycleCnt 	:= reg_cycleCnt + 1.U
+			when (enable && io.out.valid) {
+				reg_instrCnt 	:= reg_instrCnt + 1.U
+			}
+
+			val trap = Module(new DifftestTrapEvent)
+			trap.io.clock 		:= clock
+			trap.io.coreid 		:= 0.U
+			trap.io.valid 		:= 0x6b.U === io.out.inst
+			trap.io.code 		:= 0.U
+			trap.io.pc 			:= io.out.pc
+			trap.io.cycleCnt 	:= reg_cycleCnt
+			trap.io.instrCnt 	:= reg_instrCnt
+		}
 	}
 }
 

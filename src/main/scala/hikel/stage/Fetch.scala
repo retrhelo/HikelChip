@@ -31,6 +31,7 @@ class Fetch extends Stage {
 	enable := io.enable && io.fetch_ready
 
 	private val ENTRY_PC 	= "h8000_0000".U(PC.W)
+	// private val ENTRY_PC 	= "h7fff_fffc".U(PC.W)
 
 	withReset(rst) {
 		val reg_pc = RegInit(ENTRY_PC)
@@ -48,6 +49,7 @@ class Fetch extends Stage {
 		io.out.pc 		:= reg_pc
 		io.out.excp 	:= io.fetch_illegal
 		io.out.code 	:= Mux(io.fetch_illegal, MCause.INS_ACCE, 0.U)
+		io.out.valid 	:= RegNext(true.B)
 	}
 }
 

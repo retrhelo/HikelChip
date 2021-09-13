@@ -12,6 +12,10 @@ class StagePortIn extends Bundle {
 	val pc 		= UInt(PC.W)
 	val excp 	= Bool()
 	val code 	= UInt(EXCP_LEN.W)
+
+	// for ysyx debug
+	val valid 	= Bool()
+	val inst 	= UInt(INST.W)
 }
 
 // standard pipeline stage ports
@@ -36,15 +40,21 @@ class Stage extends Module {
 		val reg_pc 		= RegInit(0.U)
 		val reg_excp 	= RegInit(false.B)
 		val reg_code 	= RegInit(0.U)
+		val reg_valid 	= RegInit(false.B)
+		val reg_inst 	= RegInit(0.U(INST.W))
 		when (enable) {
 			reg_pc 		:= io.in.pc
 			reg_excp 	:= io.in.excp
 			reg_code 	:= io.in.code
+			reg_valid 	:= io.in.valid
+			reg_inst 	:= io.in.inst
 		}
 
 		io.out.pc 		:= reg_pc
 		io.out.excp 	:= reg_excp
 		io.out.code 	:= reg_code
+		io.out.valid 	:= reg_valid
+		io.out.inst 	:= reg_inst
 	}
 }
 

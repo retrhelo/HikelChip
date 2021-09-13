@@ -35,18 +35,22 @@ class Alu extends RawModule {
 	val arith 	= io.in.op(3)
 	val word 	= io.in.op(4)
 
+	val in0 = Mux(word, Cat(Fill(32, io.in.in0(31) & arith), io.in.in0(31, 0)), io.in.in0)
+	val in1 = Mux(word, Cat(Fill(32, io.in.in1(31) & arith), io.in.in1(31, 0)), io.in.in1)
 	val add_in1 = Mux(arith, ~io.in.in1 + 1.U, io.in.in1)
-	val shmt = io.in.in1(log2Ceil(MXLEN)-1, 0)
+
+	val shmt = Mux(word, Cat(0.U, io.in.in1(log2Ceil(32)-1, 0)), 
+			io.in.in1(log2Ceil(MXLEN)-1, 0))
+
 	val res = MuxLookup(op, 0.U, Array(
-		ADD 	-> (io.in.in0 + add_in1), 
-		SLT 	-> (io.in.in0.asSInt < io.in.in1.asSInt), 
-		SLTU 	-> (io.in.in0.asUInt < io.in.in1.asUInt), 
-		XOR 	-> (io.in.in0 ^ io.in.in1), 
-		OR 		-> (io.in.in0 | io.in.in1), 
-		AND 	-> (io.in.in0 & io.in.in1), 
-		SLL 	-> (io.in.in0 << shmt), 
-		SRL 	-> Mux(arith, (io.in.in0.asSInt >> shmt).asUInt, 
-				io.in.in0 >> shmt), 
+		ADD 	-> (in0 + add_in1), 
+		SLT 	-> (in0.asSInt < in1.asSInt), 
+		SLTU 	-> (in0.asUInt < in1.asUInt), 
+		XOR 	-> (in0 ^ in1), 
+		OR 		-> (in0 | in1), 
+		AND 	-> (in0 & in1), 
+		SLL 	-> (in0 << shmt), 
+		SRL 	-> Mux(arith, (in0.asSInt >> shmt).asUInt, in0 >> shmt), 
 	))
 
 	io.res := Mux(word, Cat(Fill(MXLEN-32, res(31)), res(31, 0)), res)
