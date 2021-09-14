@@ -8,9 +8,8 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
+import hikel._
 import hikel.Config._
-import hikel.RegFile
-import hikel.csr.Csr
 import hikel.fufu._
 
 class ExecutePortIn extends StagePortIn {
@@ -21,7 +20,7 @@ class ExecutePortIn extends StagePortIn {
 	val uop 			= UInt(5.W)
 
 	val rd_addr 		= UInt(RegFile.ADDR.W)
-	val csr_addr 		= UInt(Csr.ADDR.W)
+	val csr_addr 		= UInt(CsrFile.ADDR.W)
 
 	val rd_wen 			= Bool()
 	val csr_use 		= Bool()
@@ -44,7 +43,7 @@ class Execute extends Stage {
 		val reg_imm 		= RegInit(0.U(IMM.W))
 		val reg_uop 		= RegInit(0.U(5.W))
 		val reg_rd_addr 	= RegInit(0.U(RegFile.ADDR.W))
-		val reg_csr_addr 	= RegInit(0.U(Csr.ADDR.W))
+		val reg_csr_addr 	= RegInit(0.U(CsrFile.ADDR.W))
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
@@ -63,7 +62,9 @@ class Execute extends Stage {
 		// connect to alu
 		io.alu.in.in0 	:= reg_rs1_data
 		io.alu.in.in1 	:= reg_rs2_data
-		io.alu.in.op 	:= reg_uop
+		io.alu.in.op 	:= Cat(reg_uop(4) && !reg_csr_use, 
+				reg_uop(3) && !reg_csr_use, 
+				reg_uop(2, 0))
 
 		// connect to next stage
 		io.out.rd_addr 	:= reg_rd_addr
@@ -71,19 +72,20 @@ class Execute extends Stage {
 		io.out.rd_wen 	:= reg_rd_wen
 		io.out.csr_use 	:= reg_csr_use
 		io.out.lsu_use 	:= reg_lsu_use
-		io.out.data1 	:= io.alu.res
-		// currently data2 is not used
-		io.out.data2 	:= 0.U
 
-		// bypass for redirection
+		// io.out.data1 	:= io.alu.res
+		// io.out.data2 	:= 0.U
+		io.out.data1 	:= Mux(reg_csr_use, reg_rs1_data, io.alu.res)
+		io.out.data2 	:= Mux(reg_uop(3), reg_rs2_data, io.alu.res)
+
+		// bypass for regfile redirection
 		addSource(io.out.rd_wen, "exec_rd_wen")
 		addSource(io.out.rd_addr, "exec_rd_addr")
 		addSource(io.out.data1, "exec_rd_data")
+
+		// bypass for csrfile redirection
+		addSource(io.out.csr_use, "exec_csr_use")
+		addSource(io.out.csr_addr, "exec_csr_addr")
+		addSource(io.out.data2, "exec_csr_data")
 	}
-}
-
-
-import chisel3.stage.ChiselStage
-object ExecuteGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Execute, BUILD_ARG)
 }

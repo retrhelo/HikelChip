@@ -9,16 +9,14 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
+import hikel._
 import hikel.Config._
-import hikel.RegFile
-import hikel.RegFileWrite
-import hikel.csr.Csr
 
 import difftest._
 
 class CommitPortIn extends StagePortIn {
 	val rd_addr 	= UInt(RegFile.ADDR.W)
-	val csr_addr 	= UInt(Csr.ADDR.W)
+	val csr_addr 	= UInt(CsrFile.ADDR.W)
 
 	val rd_wen 		= Bool()
 	val csr_use 	= Bool()
@@ -31,6 +29,7 @@ class CommitPortIn extends StagePortIn {
 class CommitPort extends StagePort {
 	override lazy val in = Input(new CommitPortIn)
 	val regfile_write = Flipped(new RegFileWrite)
+	val csrfile_write = Flipped(new CsrFileWrite)
 }
 
 class Commit extends Stage {
@@ -38,7 +37,7 @@ class Commit extends Stage {
 
 	withReset(rst) {
 		val reg_rd_addr 	= RegInit(0.U(RegFile.ADDR.W))
-		val reg_csr_addr 	= RegInit(0.U(Csr.ADDR.W))
+		val reg_csr_addr 	= RegInit(0.U(CsrFile.ADDR.W))
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
@@ -58,15 +57,28 @@ class Commit extends Stage {
 		io.regfile_write.rd_wen 	:= reg_rd_wen
 		io.regfile_write.rd_addr 	:= reg_rd_addr
 		io.regfile_write.rd_data 	:= reg_data1
-
 		// bypass for redirection
 		addSource(io.regfile_write.rd_wen, "commit_rd_wen")
 		addSource(io.regfile_write.rd_addr, "commit_rd_addr")
 		addSource(io.regfile_write.rd_data, "commit_rd_data")
+
+		// connect to csrfile write port
+		io.csrfile_write.addr 		:= reg_csr_addr
+		io.csrfile_write.data 		:= reg_data2
+		io.csrfile_write.wen 		:= reg_csr_use
+		// bypass for redirection
+		addSource(io.csrfile_write.wen, "commit_csr_use")
+		addSource(io.csrfile_write.addr, "commit_csr_addr")
+		addSource(io.csrfile_write.data, "commit_csr_data")
+
+		// is this instruction valid?
+		val minstret_en = Wire(Bool())
+		minstret_en := enable && io.out.valid
+		addSource(minstret_en, "minstret_en")
 	}
 
 	// for YSYX project
-	if (YSYX_TEST_OUTPUT) {
+	if (YSYX_DIFFTEST) {
 		val difftest = Module(new DifftestInstrCommit)
 		difftest.io.clock 	:= clock
 		difftest.io.coreid 	:= 0.U
@@ -88,13 +100,10 @@ class Commit extends Stage {
 
 		// connect to trap
 		{
-			val reg_cycleCnt 	= RegInit(0.U(MXLEN.W))
-			val reg_instrCnt 	= RegInit(0.U(MXLEN.W))
-			// update
-			reg_cycleCnt 	:= reg_cycleCnt + 1.U
-			when (enable && io.out.valid) {
-				reg_instrCnt 	:= reg_instrCnt + 1.U
-			}
+			val cycleCnt = WireInit(0.U(MXLEN.W))
+			val instrCnt = WireInit(0.U(MXLEN.W))
+			addSink(cycleCnt, "mcycle")
+			addSink(instrCnt, "minstret")
 
 			val trap = Module(new DifftestTrapEvent)
 			trap.io.clock 		:= clock
@@ -102,14 +111,8 @@ class Commit extends Stage {
 			trap.io.valid 		:= 0x6b.U === io.out.inst
 			trap.io.code 		:= 0.U
 			trap.io.pc 			:= io.out.pc
-			trap.io.cycleCnt 	:= reg_cycleCnt
-			trap.io.instrCnt 	:= reg_instrCnt
+			trap.io.cycleCnt 	:= cycleCnt
+			trap.io.instrCnt 	:= instrCnt
 		}
 	}
-}
-
-
-import chisel3.stage.ChiselStage
-object CommitGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Commit, BUILD_ARG)
 }

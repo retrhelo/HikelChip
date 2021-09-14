@@ -1,22 +1,21 @@
 // This is the functional interface of CSR registers
 
-package hikel.fufu
+package hikel
 
 import chisel3._
 import chisel3.util._
 
-import freechips.rocketchip.rocket.CSR
-
 import hikel.Config._
+import hikel.csr.machine._
 
-class CsrReadPort extends Bundle {
-	val addr 	= Input(UInt(CSR.ADDRSZ.W))
+class CsrFileRead extends Bundle {
+	val addr 	= Input(UInt(CsrFile.ADDR.W))
 	val data 	= Output(UInt(MXLEN.W))
 	val valid 	= Output(Bool())
 }
 
-class CsrWritePort extends Bundle {
-	val addr 	= Input(UInt(CSR.ADDRSZ.W))
+class CsrFileWrite extends Bundle {
+	val addr 	= Input(UInt(CsrFile.ADDR.W))
 	val data 	= Input(UInt(MXLEN.W))
 	val wen 	= Input(Bool())
 	val valid 	= Output(Bool())
@@ -34,6 +33,8 @@ abstract class CsrReg(val addr: Int) extends Module {
 }
 
 object CsrFile {
+	val ADDR 		= 12
+
 	val CMD 		= 2
 	val CSR_NONE 	= "b00".U
 	val CSR_WRITE 	= "b01".U
@@ -57,8 +58,8 @@ import csr.machine._
 // to assign hartid.
 class CsrFile(val hartid: Int) extends Module {
 	val io = IO(new Bundle {
-		val read 	= new CsrReadPort
-		val write 	= new CsrWritePort
+		val read 	= new CsrFileRead
+		val write 	= new CsrFileWrite
 	})
 
 	// default connection for read port
@@ -71,7 +72,7 @@ class CsrFile(val hartid: Int) extends Module {
 	val csrfile = List(
 		Module(new MVendorId), Module(new MArchId), Module(new MImpId), Module(new MHartId(hartid)), 
 		Module(new MCycle), Module(new MInstret), 
-		Module(new MScratch), 
+		Module(new MScratch), Module(new MStatus)
 	)
 	for (i <- 0 until csrfile.length) {
 		val csr = csrfile(i)
@@ -93,10 +94,4 @@ class CsrFile(val hartid: Int) extends Module {
 			}
 		}
 	}
-}
-
-
-import chisel3.stage.ChiselStage
-object CsrFileGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new CsrFile(0), BUILD_ARG)
 }

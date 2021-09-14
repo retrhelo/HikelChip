@@ -4,6 +4,7 @@ package hikel
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
 import hikel.Config._
 import hikel.stage._
@@ -12,7 +13,7 @@ import hikel.fufu._
 // difftest
 import difftest._
 
-class HikelCore extends Module {
+class HikelCore(val hartid: Int) extends Module {
 	val io = IO(new Bundle {
 		val pc 		= Output(UInt(PC.W))
 		val icache_ready 	= Input(Bool())
@@ -90,10 +91,53 @@ class HikelCore extends Module {
 	commit.io.enable := true.B
 	commit.io.clear := false.B
 	commit.io.trap := false.B
-}
 
+	// CSR
+	private val csrfile = Module(new CsrFile(hartid));
+	issue.io.csrfile_read <> csrfile.io.read
+	commit.io.csrfile_write <> csrfile.io.write
+	if (YSYX_DIFFTEST) {
+		val mstatus 		= WireInit(0.U(MXLEN.W))
+		val mcause 			= WireInit(0.U(MXLEN.W))
+		val mepc 			= WireInit(0.U(MXLEN.W))
+		val mip 			= WireInit(0.U(MXLEN.W))
+		val mie 			= WireInit(0.U(MXLEN.W))
+		val mscratch 		= WireInit(0.U(MXLEN.W))
+		val mideleg 		= WireInit(0.U(MXLEN.W))
+		val medeleg 		= WireInit(0.U(MXLEN.W))
+		val mtval 			= WireInit(0.U(MXLEN.W))
+		val mtvec 			= WireInit(0.U(MXLEN.W))
+		addSink(mstatus, "mstatus")
+		addSink(mcause, "mcause")
+		addSink(mepc, "mepc")
+		addSink(mip, "mip")
+		addSink(mie, "mie")
+		addSink(mscratch, "mscratch")
+		addSink(mideleg, "mideleg")
+		addSink(medeleg, "medeleg")
+		addSink(mtval, "mtval")
+		addSink(mtvec, "mtvec")
 
-import chisel3.stage.ChiselStage
-object HikelGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new HikelCore, BUILD_ARG)
+		val difftest = Module(new DifftestCSRState)
+		difftest.io.clock 		:= clock
+		difftest.io.coreid 		:= 0.U
+		difftest.io.mstatus 	:= mstatus
+		difftest.io.mcause 		:= mcause
+		difftest.io.mepc 		:= mepc
+		difftest.io.sstatus 	:= 0.U
+		difftest.io.scause 		:= 0.U
+		difftest.io.sepc 		:= 0.U
+		difftest.io.satp 		:= 0.U
+		difftest.io.mip 		:= mip
+		difftest.io.mie 		:= mie
+		difftest.io.mscratch 	:= mscratch
+		difftest.io.sscratch 	:= 0.U
+		difftest.io.mideleg 	:= mideleg
+		difftest.io.medeleg 	:= medeleg
+		difftest.io.mtval 		:= mtval
+		difftest.io.stval 		:= 0.U
+		difftest.io.mtvec 		:= RegNext(mtvec)
+		difftest.io.stvec 		:= 0.U
+		difftest.io.priviledgeMode := "b11".U
+	}
 }

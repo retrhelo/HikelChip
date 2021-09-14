@@ -17,5 +17,5 @@ object Config {
 	val BUILD_ARG 	= Array("-td", "./build")
 
 	// add extra instructions to support ysyx tests
-	val YSYX_TEST_OUTPUT 	= true
+	val YSYX_DIFFTEST 	= true
 }

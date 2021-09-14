@@ -1,15 +1,15 @@
-// CSR registers for Trap
+// CSR Trap Registers
 
 package hikel.csr.machine
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
-import hikel.Config.MXLEN
+import freechips.rocketchip.rocket.CSRs
 
-import hikel.csr.Csr._
-import hikel.csr.CsrReg
-import hikel.csr.CsrPort
+import hikel.Config._
+import hikel.CsrReg
 
 object MStatus {
 	val SIE 	= 1
@@ -33,99 +33,90 @@ object MStatus {
 	val SD 		= MXLEN - 1
 }
 
-class MStatusBundle extends CsrPort {
-	val trap_wen = Input(Bool())
-	val trap_data = Input(UInt(MXLEN.W))
-}
-
-class MStatus extends CsrReg(MSTATUS) {
-	override lazy val io = IO(new MStatusBundle)
+class MStatus extends CsrReg(CSRs.mstatus) {
+	val mstatus = WireInit(0.U(MXLEN.W))
 
 	val mie 	= RegInit(false.B)
 	val mpie 	= RegInit(false.B)
 
-	val read_vec = VecInit(io.read.asBools)
-	for (i <- 0 until read_vec.length) {
-		read_vec(i) := false.B
-	}
-	read_vec(MStatus.MIE) := mie
-	read_vec(MStatus.MPIE) := mpie
-	read_vec(MStatus.MPP+1) := true.B
-	read_vec(MStatus.MPP) := true.B
-	io.read := read_vec.asUInt
+	val mstatus_vec = VecInit(mstatus.asBools)
+	mstatus_vec(MStatus.MIE) 	:= mie
+	mstatus_vec(MStatus.MPIE) 	:= mpie
+	// mstatus_vec(MStatus.MPP+1) 	:= true.B
+	// mstatus_vec(MStatus.MPP) 	:= true.B
 
-	when (io.trap_wen) {
-		mie := io.trap_data(MStatus.MIE)
-		mpie := mie
-	}
-	.elsewhen (wen) {
-		mie := io.data(MStatus.MIE)
-		mpie := io.data(MStatus.MPIE)
+	io.rdata 	:= mstatus_vec.asUInt
+	addSource(io.rdata, "mstatus")
+
+	// update
+	when (io.wen) {
+		mie 	:= io.wdata(MStatus.MIE)
+		mpie 	:= io.wdata(MStatus.MPIE)
 	}
 }
 
-class MIsa extends CsrReg(MISA) {
+class MIsa extends CsrReg(CSRs.misa) {
 	val EXT_I = 1 << ('I' - 'A')
-	val EXT_C = 1 << ('C' - 'A')
+	val EXT = EXT_I
 
-	val EXT = EXT_I | EXT_C
-
-	io.read := EXT.U
+	io.rdata 	:= EXT.U
 }
 
-class MEDeleg extends CsrReg(MEDELEG) {
-	io.read := 0.U
+class MEDeleg extends CsrReg(CSRs.medeleg) {
+	val medeleg = WireInit(0.U(MXLEN.W))
+
+	addSource(medeleg, "medeleg")
+	io.rdata 	:= medeleg
 }
-class MIDeleg extends CsrReg(MEDELEG) {
-	io.read := 0.U
+class MIDeleg extends CsrReg(CSRs.mideleg) {
+	val mideleg = WireInit(0.U(MXLEN.W))
+
+	addSource(mideleg, "mideleg")
+	io.rdata 	:= mideleg
 }
 
 object MtVec {
-	val MODE_DIRECT = 0.U(2.W)
-	val MODE_VECTORED = 1.U(2.W)
+	val MODE_DIRECT 	= 0.U(2.W)
+	val MODE_VECTORED 	= 1.U(2.W)
 }
 
-class MtVec extends CsrReg(MTVEC) {
+class MtVec extends CsrReg(CSRs.mtvec) {
 	val BASE = RegInit(0.U((MXLEN - 2).W))
-	// only support MODE
+	// only support Direct Mode
 	val MODE = MtVec.MODE_DIRECT
 
-	io.read := Cat(BASE, MODE)
+	val mtvec = Cat(BASE, MODE)
 
-	val align = ~(io.data(1, 0).orR)
+	addSource(mtvec, "mtvec")
+	io.rdata 	:= Cat(BASE, MODE)
 
-	when (wen && align) {
-		BASE := io.data(MXLEN-3, 2)
+	val align = !(io.wdata(1, 0).orR)
+	when (io.wen && align) {
+		BASE 	:= io.wdata(MXLEN-1, 2)
 	}
 }
 
-class MScratch extends CsrReg(MSCRATCH) {
+class MScratch extends CsrReg(CSRs.mscratch) {
 	val mscratch = RegInit(0.U(MXLEN.W))
 
-	io.read := mscratch
-	when (wen) {
-		mscratch := io.data
+	io.rdata := mscratch
+	addSource(mscratch, "mscratch")
+	// update
+	when (io.wen) {
+		mscratch := io.wdata
 	}
 }
 
-class MEpcBundle extends CsrPort {
-	val trap_wen = Input(Bool())
-	val trap_data = Input(UInt((MXLEN-1).W))
-}
-
-class MEpc extends CsrReg(MEPC) {
-	override lazy val io = IO(new MEpcBundle)
-
-	val mepc = RegInit(0.U((MXLEN-1).W))
+class MEpc extends CsrReg(CSRs.mepc) {
+	val mepc = RegInit(0.U((MXLEN - 2).W))
 
 	// mepc[0] is always zero, and for those only implement IALIGN = 32, 
-	// mepc[1:0] are always zero. 
-	io.read := Cat(mepc, 0.U(1.W))
-	when (io.trap_wen) {
-		mepc := io.trap_data
-	}
-	.elsewhen (wen) {
-		mepc := io.data(MXLEN-1, 1)
+	// mepc[1:0] are always zero
+	io.rdata := Cat(mepc, 0.U(2.W))
+	addSource(mepc, "mepc")
+
+	when (io.wen) {
+		mepc := io.wdata(MXLEN-1, 2)
 	}
 }
 
@@ -160,101 +151,34 @@ object MCause {
 	val STORE_PAGEFAULT 		= 15.U(EXCP_LEN.W)
 }
 
-class MCauseBundle extends CsrPort {
-	val trap_wen = Input(Bool())
-	// Exception Code
-	val trap_excp_code = Input(UInt(MCause.EXCP_LEN.W))
-	// Interrupt Bit
-	val trap_int = Input(Bool())
-}
-
-class MCause extends CsrReg(MCAUSE) {
-	override lazy val io = IO(new MCauseBundle)
-
+class MCause extends CsrReg(CSRs.mcause) {
 	val int = RegInit(false.B)
-	val excp_code = RegInit(0.U(MCause.EXCP_LEN.W))
+	val excp_code = RegInit(0.U(MCause.EXCP_LEN))
 
-	io.read := Cat(int, Fill(MXLEN - 1 - MCause.EXCP_LEN, 0.U), excp_code)
+	val mcause = Wire(UInt(MXLEN.W))
+	mcause := Cat(int, Fill(MXLEN - 1 - MCause.EXCP_LEN, 0.U), excp_code)
 
-	// trap handling
-	when (io.trap_wen) {
-		excp_code := io.trap_excp_code
-		int := io.trap_int
-	}
+	io.rdata := mcause
+	addSource(mcause, "mcause")
 }
 
-class MtValBundle extends CsrPort {
-	val trap_wen = Input(Bool())
-	val trap_data = Input(UInt(MXLEN.W))
+class MtVal extends CsrReg(CSRs.mtval) {
+	val mtval = WireInit(0.U(MXLEN.W))
+
+	io.rdata := mtval
+	addSource(mtval, "mtval")
 }
 
-class MtVal extends CsrReg(MTVAL) {
-	override lazy val io = IO(new MtValBundle)
+class Mip extends CsrReg(CSRs.mip) {
+	val mip = WireInit(0.U(MXLEN.W))
 
-	val value = RegInit(0.U(MXLEN.W))
-
-	io.read := value
-	when (io.trap_wen) {
-		value := io.trap_data
-	}
-	.elsewhen (wen) {
-		value := io.data
-	}
+	io.rdata := mip
+	addSource(mip, "mip")
 }
 
-// Machine Level Interrupt Enable/Pending
-object MI {
-	val MI_LEN 	= 16
+class Mie extends CsrReg(CSRs.mie) {
+	val mie = WireInit(0.U(MXLEN.W))
 
-	val SSI 	= 1		// S-level soft
-	val MSI 	= 3		// M-level soft
-	val STI 	= 5		// S-level timer
-	val MTI 	= 7		// M-level timer
-	val SEI 	= 9		// S-level external
-	val MEI 	= 11	// M-level external
-}
-
-class Mie extends CsrReg(MIE) {
-	val msie = RegInit(false.B)
-	val mtie = RegInit(false.B)
-	val meie = RegInit(false.B)
-	
-	val read_vec = VecInit(io.read.asBools)
-	for (i <- 0 until read_vec.length) {
-		read_vec(i) := false.B
-	}
-	read_vec(MI.MSI) := msie
-	read_vec(MI.MTI) := mtie
-	read_vec(MI.MEI) := meie
-	io.read := read_vec.asUInt
-
-	when (wen) {
-		msie := io.data(MI.MSI)
-		mtie := io.data(MI.MTI)
-		meie := io.data(MI.MEI)
-	}
-}
-
-class MipBundle extends CsrPort {
-	val msip = Input(Bool())
-	val mtip = Input(Bool())
-	val meip = Input(Bool())
-}
-
-class Mip extends CsrReg(MIP) {
-	override lazy val io = IO(new MipBundle)
-
-	// Please remember that all of the M-level bits in mip 
-	// are not changable by writing directly to mip. 
-
-	// io.read := 0.U
-	val read_vec = VecInit(io.read.asBools)
-	for (i <- 0 until read_vec.length) {
-		read_vec(i) := false.B
-	}
-	read_vec(MI.MSI) := io.msip
-	read_vec(MI.MTI) := io.mtip
-	read_vec(MI.MEI) := io.meip
-
-	io.read := read_vec.asUInt
+	io.rdata := mie
+	addSource(mie, "mie")
 }

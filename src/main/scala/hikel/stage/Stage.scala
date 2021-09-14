@@ -31,6 +31,8 @@ class StagePort extends Bundle {
 class Stage extends Module {
 	lazy val io = IO(new StagePort)
 
+	val NOP = "h0000_0013".U(INST.W)
+
 	val enable = Wire(Bool())
 	val rst = Wire(Bool())
 	enable := io.enable
@@ -41,7 +43,7 @@ class Stage extends Module {
 		val reg_excp 	= RegInit(false.B)
 		val reg_code 	= RegInit(0.U)
 		val reg_valid 	= RegInit(false.B)
-		val reg_inst 	= RegInit(0.U(INST.W))
+		val reg_inst 	= RegInit(NOP)
 		when (enable) {
 			reg_pc 		:= io.in.pc
 			reg_excp 	:= io.in.excp

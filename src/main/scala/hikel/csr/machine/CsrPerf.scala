@@ -1,21 +1,24 @@
 // CSR registers for performance measurement
 
-package hikel.fufu.csr.machine
+package hikel.csr.machine
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.BoringUtils
+import chisel3.util.experimental.BoringUtils._
 
 import freechips.rocketchip.rocket.CSRs
 
 import hikel.Config._
-import hikel.fufu.CsrReg
+import hikel.CsrReg
 
 class MCycle extends CsrReg(CSRs.mcycle) {
 	val mcycle = RegInit(0.U(MXLEN.W))
-	io.rdata := mcycle
 
-	BoringUtils.addSource(mcycle, "mcycle")
+	// connect to outside
+	io.rdata := mcycle
+	if (YSYX_DIFFTEST) {
+		addSource(mcycle, "mcycle")
+	}
 
 	// update cycle
 	mcycle := mcycle + 1.U
@@ -23,12 +26,14 @@ class MCycle extends CsrReg(CSRs.mcycle) {
 
 class MInstret extends CsrReg(CSRs.minstret) {
 	val minstret = RegInit(0.U(MXLEN.W))
+	
 	io.rdata := minstret
+	if (YSYX_DIFFTEST) {
+		addSource(minstret, "minstret")
+	}
 
-	val enable = Wire(Bool())
-	// configure default connection for enable
-	enable := false.B
-	BoringUtils.addSink(enable, "minstret_en")
+	val enable = WireInit(false.B)
+	addSink(enable, "minstret_en")
 
 	when (enable) {
 		minstret := minstret + 1.U

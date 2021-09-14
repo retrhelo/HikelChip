@@ -1,24 +1,27 @@
+// System Information CSRs
+
 package hikel.csr.machine
 
 import chisel3._
 import chisel3.util._
 
-import hikel.csr.Csr._
-import hikel.csr.CsrReg
-import hikel.csr.CsrPort
+import hikel.Config._
+import hikel.CsrReg
 
-class MVendorId extends CsrReg(MVENDORID) {
-	io.read := 0.U
+import freechips.rocketchip.rocket.CSRs
+
+class MVendorId extends CsrReg(CSRs.mvendorid) {
+	io.rdata 	:= 0.U
 }
 
-class MArchId extends CsrReg(MARCHID) {
-	io.read := 0.U
+class MArchId extends CsrReg(CSRs.marchid) {
+	io.rdata 	:= 0.U
 }
 
-class MImpId extends CsrReg(MIMPID) {
-	io.read := 0.U
+class MImpId extends CsrReg(CSRs.mimpid) {
+	io.rdata 	:= 0.U
 }
 
-class MHartId(val hartid: Int) extends CsrReg(MHARTID) {
-	io.read := hartid.U
+class MHartId(val hartid: Int) extends CsrReg(CSRs.mhartid) {
+	io.rdata 	:= hartid.U
 }

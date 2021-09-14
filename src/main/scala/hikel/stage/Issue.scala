@@ -11,7 +11,6 @@ import chisel3.util.experimental.BoringUtils._
 
 import hikel._
 import hikel.Config._
-import hikel.csr._
 import hikel.fufu._
 
 class IssuePortIn extends StagePortIn {
@@ -24,7 +23,7 @@ class IssuePortIn extends StagePortIn {
 	val uop 			= UInt(5.W)
 
 	val rd_addr 		= UInt(RegFile.ADDR.W)
-	val csr_addr 		= UInt(Csr.ADDR.W)
+	val csr_addr 		= UInt(CsrFile.ADDR.W)
 
 	val rd_wen 			= Bool()
 	val csr_use 		= Bool()
@@ -38,6 +37,9 @@ class IssuePort extends StagePort {
 
 	// connect to regfile
 	val regfile_read 	= Flipped(Vec(2, new RegFileRead))
+
+	// connect to CSR
+	val csrfile_read 	= Flipped(new CsrFileRead)
 
 	// connect BrCond
 	val brcond = Output(new BrCondPort)
@@ -54,7 +56,7 @@ class Issue extends Stage {
 		val reg_imm 		= RegInit(0.U(IMM.W))
 		val reg_uop 		= RegInit(0.U(5.W))
 		val reg_rd_addr 	= RegInit(0.U(RegFile.ADDR.W))
-		val reg_csr_addr 	= RegInit(0.U(Csr.ADDR.W))
+		val reg_csr_addr 	= RegInit(0.U(CsrFile.ADDR.W))
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
@@ -78,19 +80,12 @@ class Issue extends Stage {
 		io.regfile_read(0).addr := reg_rs1_addr
 		io.regfile_read(1).addr := reg_rs2_addr
 
-		val exec_rd_wen 	= Wire(Bool())
-		val exec_rd_addr 	= Wire(UInt(RegFile.ADDR.W))
-		val exec_rd_data 	= Wire(UInt(MXLEN.W))
-		val commit_rd_wen 	= Wire(Bool())
-		val commit_rd_addr 	= Wire(UInt(RegFile.ADDR.W))
-		val commit_rd_data 	= Wire(UInt(MXLEN.W))
-		exec_rd_wen 	:= false.B
-		exec_rd_addr 	:= 0.U
-		exec_rd_data 	:= 0.U
-		commit_rd_wen 	:= false.B
-		commit_rd_addr 	:= 0.U
-		commit_rd_data 	:= 0.U
-
+		val exec_rd_wen 	= WireInit(false.B)
+		val exec_rd_addr 	= WireInit(0.U(RegFile.ADDR.W))
+		val exec_rd_data 	= WireInit(0.U(MXLEN.W))
+		val commit_rd_wen 	= WireInit(false.B)
+		val commit_rd_addr 	= WireInit(0.U(RegFile.ADDR.W))
+		val commit_rd_data 	= WireInit(0.U(MXLEN.W))
 		addSink(exec_rd_wen, "exec_rd_wen")
 		addSink(exec_rd_addr, "exec_rd_addr")
 		addSink(exec_rd_data, "exec_rd_data")
@@ -121,6 +116,43 @@ class Issue extends Stage {
 			Mux(reg_rs2_use, rs2, reg_imm)
 		}
 
+		// connect to CSR
+		io.csrfile_read.addr 	:= reg_csr_addr
+		val csr_valid = io.csrfile_read.valid
+		val csr_rdata = {	// redirection
+			val exec_csr_use 	= WireInit(false.B)
+			val exec_csr_addr 	= WireInit(0.U(CsrFile.ADDR.W))
+			val exec_csr_data 	= WireInit(0.U(MXLEN.W))
+			addSink(exec_csr_use, "exec_csr_use")
+			addSink(exec_csr_addr, "exec_csr_addr")
+			addSink(exec_csr_data, "exec_csr_data")
+			val exec_conflict = exec_csr_use && exec_csr_addr === reg_csr_addr
+
+			val commit_csr_use 		= WireInit(false.B)
+			val commit_csr_addr 	= WireInit(0.U(CsrFile.ADDR.W))
+			val commit_csr_data 	= WireInit(0.U(MXLEN.W))
+			addSink(commit_csr_use, "commit_csr_use")
+			addSink(commit_csr_addr, "commit_csr_addr")
+			addSink(commit_csr_data, "commit_csr_data")
+			val commit_conflict = commit_csr_use && commit_csr_addr === reg_csr_addr
+
+			// do redirection
+			Mux(exec_conflict, exec_csr_data, 
+					Mux(commit_conflict, commit_csr_data, io.csrfile_read.data))
+		}
+
+		val csr_mask = WireInit(0.U(MXLEN.W))
+		val csr_uop = WireInit(0.U(5.W));
+		{
+			val cmd = reg_uop(1, 0)
+			val mask = Mux(reg_rs1_use, rs1_data, reg_imm)
+			val csr_clear = CsrFile.CSR_CLEAR === cmd
+
+			csr_mask := Mux(csr_clear, ~mask, mask)
+			csr_uop := Cat(false.B, CsrFile.CSR_WRITE === cmd, 
+					Mux(csr_clear, Alu.AND, Alu.OR))
+		}
+
 		// connect to BrCond
 		io.brcond.in0 := rs1_data
 		io.brcond.in1 := rs2_data
@@ -130,20 +162,16 @@ class Issue extends Stage {
 		io.brcond.sel := reg_jb_use
 
 		// connect to next stage
-		io.out.rs1_data 	:= Mux(reg_rs1_use && !reg_jb_use, rs1_data, io.out.pc)
-		io.out.rs2_data 	:= Mux(reg_jb_use, 4.U, rs2_data)
+		io.out.rs1_data 	:= Mux(reg_csr_use, csr_rdata, 
+				Mux(reg_rs1_use && !reg_jb_use, rs1_data, io.out.pc))
+		io.out.rs2_data 	:= Mux(reg_csr_use, csr_mask, 
+				Mux(reg_jb_use, 4.U, rs2_data))
 		io.out.imm 			:= reg_imm
-		io.out.uop 			:= Mux(reg_jb_use, 0.U, reg_uop)
+		io.out.uop 			:= Mux(reg_csr_use, csr_uop, Mux(reg_jb_use, Alu.ADD, reg_uop))
 		io.out.rd_addr 		:= reg_rd_addr
 		io.out.csr_addr 	:= reg_csr_addr
 		io.out.rd_wen 		:= reg_rd_wen
 		io.out.csr_use 		:= reg_csr_use
 		io.out.lsu_use 		:= reg_lsu_use
 	}
-}
-
-
-import chisel3.stage.ChiselStage
-object IssueGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Issue, BUILD_ARG)
 }

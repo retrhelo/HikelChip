@@ -33,7 +33,7 @@ class SimTop extends Module {
 
 	val reg_delay_reset = RegNext(reset.asBool)
 	withReset(reg_delay_reset) {
-		val hikel = Module(new HikelCore)
+		val hikel = Module(new HikelCore(0))
 		hikel.io.icache_ready 		:= true.B
 		hikel.io.icache_illegal 	:= true.B
 
@@ -51,31 +51,6 @@ class SimTop extends Module {
 			hikel.io.inst 		:= Mux(hikel.io.pc(2), 
 					ram.io.rdata(63, 32), ram.io.rdata(31, 0)
 			)
-		}
-
-		// we haven't implement CSR yet
-		{
-			val csr = Module(new DifftestCSRState)
-			csr.io.clock 		:= clock
-			csr.io.coreid 		:= 0.U
-			csr.io.mstatus 		:= 0.U
-			csr.io.mcause 		:= 0.U
-			csr.io.mepc 		:= 0.U
-			csr.io.sstatus 		:= 0.U
-			csr.io.scause 		:= 0.U
-			csr.io.sepc 		:= 0.U
-			csr.io.satp 		:= 0.U
-			csr.io.mip 			:= 0.U
-			csr.io.mie 			:= 0.U
-			csr.io.mscratch 	:= 0.U
-			csr.io.sscratch 	:= 0.U
-			csr.io.mideleg 		:= 0.U
-			csr.io.medeleg 		:= 0.U
-			csr.io.mtval 		:= 0.U
-			csr.io.stval 		:= 0.U
-			csr.io.mtvec 		:= 0.U
-			csr.io.stvec 		:= 0.U
-			csr.io.priviledgeMode := 0.U
 		}
 	}
 }

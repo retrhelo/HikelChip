@@ -83,12 +83,12 @@ object InstDecode {
 		FENCE  -> List(N, N, N, N, N, N, N, N, N, N, N, Y, N, IMM_X, N, N, N, N), 
 		ECALL  -> List(N, N, N, N, N, N, N, N, N, Y, N, N, N, IMM_X, N, N, N, N), 
 		EBREAK -> List(N, N, N, N, N, N, N, N, N, N, Y, N, N, IMM_X, N, N, N, N), 
-		CSRRW  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, N, IMM_X, N, Y, N, N), 
-		CSRRS  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, N, IMM_X, N, Y, N, N), 
-		CSRRC  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, N, IMM_X, N, Y, N, N), 
-		CSRRWI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, N, IMM_Z, N, N, N, N), 
-		CSRRSI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, N, IMM_Z, N, N, N, N), 
-		CSRRCI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, N, IMM_Z, N, N, N, N), 
+		CSRRW  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N), 
+		CSRRS  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N), 
+		CSRRC  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N), 
+		CSRRWI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N), 
+		CSRRSI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N), 
+		CSRRCI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N), 
 	)
 }
 import InstDecode._

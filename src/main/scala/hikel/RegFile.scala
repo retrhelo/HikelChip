@@ -47,16 +47,12 @@ class RegFile extends Module {
 	regfile(0) := 0.U
 
 	// difftest
-	val difftest = Module(new DifftestArchIntRegState)
-	difftest.io.clock 		:= clock
-	difftest.io.coreid 		:= 0.U
-	for (i <- 0 until RegFile.NUM) {
-		difftest.io.gpr(i) 	:= regfile(i)
+	if (YSYX_DIFFTEST) {
+		val difftest = Module(new DifftestArchIntRegState)
+		difftest.io.clock 		:= clock
+		difftest.io.coreid 		:= 0.U
+		for (i <- 0 until RegFile.NUM) {
+			difftest.io.gpr(i) 	:= regfile(i)
+		}
 	}
-}
-
-
-import chisel3.stage.ChiselStage
-object RegFileGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new RegFile, BUILD_ARG)
 }
