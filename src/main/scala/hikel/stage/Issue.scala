@@ -7,6 +7,7 @@ package hikel.stage
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
 import hikel._
 import hikel.Config._
@@ -40,14 +41,6 @@ class IssuePort extends StagePort {
 
 	// connect BrCond
 	val brcond = Output(new BrCondPort)
-
-	// redirect
-	val exec_rd_addr 	= Input(UInt(RegFile.ADDR.W))
-	val exec_rd_wen 	= Input(Bool())
-	val exec_rd_data 	= Input(UInt(MXLEN.W))
-	val commit_rd_addr 	= Input(UInt(RegFile.ADDR.W))
-	val commit_rd_wen 	= Input(Bool())
-	val commit_rd_data 	= Input(UInt(MXLEN.W))
 }
 
 class Issue extends Stage {
@@ -85,25 +78,45 @@ class Issue extends Stage {
 		io.regfile_read(0).addr := reg_rs1_addr
 		io.regfile_read(1).addr := reg_rs2_addr
 
+		val exec_rd_wen 	= Wire(Bool())
+		val exec_rd_addr 	= Wire(UInt(RegFile.ADDR.W))
+		val exec_rd_data 	= Wire(UInt(MXLEN.W))
+		val commit_rd_wen 	= Wire(Bool())
+		val commit_rd_addr 	= Wire(UInt(RegFile.ADDR.W))
+		val commit_rd_data 	= Wire(UInt(MXLEN.W))
+		exec_rd_wen 	:= false.B
+		exec_rd_addr 	:= 0.U
+		exec_rd_data 	:= 0.U
+		commit_rd_wen 	:= false.B
+		commit_rd_addr 	:= 0.U
+		commit_rd_data 	:= 0.U
+
+		addSink(exec_rd_wen, "exec_rd_wen")
+		addSink(exec_rd_addr, "exec_rd_addr")
+		addSink(exec_rd_data, "exec_rd_data")
+		addSink(commit_rd_wen, "commit_rd_wen")
+		addSink(commit_rd_addr, "commit_rd_addr")
+		addSink(commit_rd_data, "commit_rd_data")
+
 		// redirect
 		val rs1_data = {
 			val rs1_redir = reg_rs1_use && 0.U =/= reg_rs1_addr
-			val exec_conflict = rs1_redir && io.exec_rd_wen && 
-					io.exec_rd_addr === reg_rs1_addr
-			val commit_conflict = rs1_redir && io.commit_rd_wen && 
-					io.commit_rd_addr === reg_rs1_addr
-			Mux(exec_conflict, io.exec_rd_data, 
-					Mux(commit_conflict, io.commit_rd_data, 
+			val exec_conflict = rs1_redir && exec_rd_wen && 
+					exec_rd_addr === reg_rs1_addr
+			val commit_conflict = rs1_redir && commit_rd_wen && 
+					commit_rd_addr === reg_rs1_addr
+			Mux(exec_conflict, exec_rd_data, 
+					Mux(commit_conflict, commit_rd_data, 
 					io.regfile_read(0).data))
 		}
 		val rs2_data = {
 			val rs2_redir = reg_rs2_use && 0.U =/= reg_rs2_addr
-			val exec_conflict = rs2_redir && io.exec_rd_wen && 
-					io.exec_rd_addr === reg_rs2_addr
-			val commit_conflict = rs2_redir && io.commit_rd_wen && 
-					io.commit_rd_addr === reg_rs2_addr
-			val rs2 = Mux(exec_conflict, io.exec_rd_data, 
-					Mux(commit_conflict, io.commit_rd_data, 
+			val exec_conflict = rs2_redir && exec_rd_wen && 
+					exec_rd_addr === reg_rs2_addr
+			val commit_conflict = rs2_redir && commit_rd_wen && 
+					commit_rd_addr === reg_rs2_addr
+			val rs2 = Mux(exec_conflict, exec_rd_data, 
+					Mux(commit_conflict, commit_rd_data, 
 					io.regfile_read(1).data))
 			Mux(reg_rs2_use, rs2, reg_imm)
 		}

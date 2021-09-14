@@ -7,6 +7,7 @@ package hikel.stage
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
 import hikel.Config._
 import hikel.RegFile
@@ -54,9 +55,14 @@ class Commit extends Stage {
 		}
 
 		// connect to regfile
+		io.regfile_write.rd_wen 	:= reg_rd_wen
 		io.regfile_write.rd_addr 	:= reg_rd_addr
 		io.regfile_write.rd_data 	:= reg_data1
-		io.regfile_write.rd_wen 	:= reg_rd_wen
+
+		// bypass for redirection
+		addSource(io.regfile_write.rd_wen, "commit_rd_wen")
+		addSource(io.regfile_write.rd_addr, "commit_rd_addr")
+		addSource(io.regfile_write.rd_data, "commit_rd_data")
 	}
 
 	// for YSYX project

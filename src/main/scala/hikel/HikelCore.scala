@@ -56,12 +56,6 @@ class HikelCore extends Module {
 	regfile.io.read <> issue.io.regfile_read
 	private lazy val brcond = Module(new BrCond)
 	brcond.io.in <> issue.io.brcond
-	issue.io.exec_rd_addr 		:= execute.io.out.rd_addr
-	issue.io.exec_rd_wen 		:= execute.io.out.rd_wen
-	issue.io.exec_rd_data 		:= execute.io.out.data1
-	issue.io.commit_rd_addr 	:= commit.io.regfile_write.rd_addr
-	issue.io.commit_rd_wen 		:= commit.io.regfile_write.rd_wen
-	issue.io.commit_rd_data 	:= commit.io.regfile_write.rd_data
 
 	// extra connections for execute
 	val alu = Module(new Alu)
