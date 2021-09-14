@@ -6,6 +6,7 @@ package hikel.stage
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
 import hikel.Config._
 import hikel.RegFile
@@ -73,6 +74,11 @@ class Execute extends Stage {
 		io.out.data1 	:= io.alu.res
 		// currently data2 is not used
 		io.out.data2 	:= 0.U
+
+		// bypass for redirection
+		addSource(io.out.rd_wen, "exec_rd_wen")
+		addSource(io.out.rd_addr, "exec_rd_addr")
+		addSource(io.out.data1, "exec_rd_data")
 	}
 }
 
