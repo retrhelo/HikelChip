@@ -42,36 +42,37 @@ class MStatus extends CsrReg(CSRs.mstatus) {
 	val mstatus_vec = VecInit(mstatus.asBools)
 	mstatus_vec(MStatus.MIE) 	:= mie
 	mstatus_vec(MStatus.MPIE) 	:= mpie
-	// mstatus_vec(MStatus.MPP+1) 	:= true.B
-	// mstatus_vec(MStatus.MPP) 	:= true.B
+	mstatus_vec(MStatus.MPP+1) 	:= true.B
+	mstatus_vec(MStatus.MPP) 	:= true.B
 
 	io.rdata 	:= mstatus_vec.asUInt
-	addSource(io.rdata, "mstatus")
+	val result = WireInit(mstatus_vec.asUInt)
+	addSource(result, "mstatus")
 
 	// update
-	when (io.wen) {
+	val do_trap = WireInit(false.B)
+	addSink(do_trap, "do_trap")
+
+	when (do_trap) {
+		mie 	:= false.B
+		mpie 	:= mie
+	}
+	.elsewhen (io.wen) {
 		mie 	:= io.wdata(MStatus.MIE)
 		mpie 	:= io.wdata(MStatus.MPIE)
 	}
 }
 
-class MIsa extends CsrReg(CSRs.misa) {
-	val EXT_I = 1 << ('I' - 'A')
-	val EXT = EXT_I
-
-	io.rdata 	:= EXT.U
-}
-
 class MEDeleg extends CsrReg(CSRs.medeleg) {
 	val medeleg = WireInit(0.U(MXLEN.W))
 
-	addSource(medeleg, "medeleg")
+	addSource(medeleg, "medeleg", disableDedup = true)
 	io.rdata 	:= medeleg
 }
 class MIDeleg extends CsrReg(CSRs.mideleg) {
 	val mideleg = WireInit(0.U(MXLEN.W))
 
-	addSource(mideleg, "mideleg")
+	addSource(mideleg, "mideleg", disableDedup = true)
 	io.rdata 	:= mideleg
 }
 
@@ -115,7 +116,15 @@ class MEpc extends CsrReg(CSRs.mepc) {
 	io.rdata := Cat(mepc, 0.U(2.W))
 	addSource(mepc, "mepc")
 
-	when (io.wen) {
+	val do_trap = WireInit(false.B)
+	val mepc_pc = WireInit(0.U(MXLEN.W))
+	addSink(do_trap, "do_trap")
+	addSink(mepc_pc, "mepc_pc")
+
+	when (do_trap) {
+		mepc := mepc_pc(MXLEN-1, 2)
+	}
+	.elsewhen (io.wen) {
 		mepc := io.wdata(MXLEN-1, 2)
 	}
 }
@@ -153,32 +162,77 @@ object MCause {
 
 class MCause extends CsrReg(CSRs.mcause) {
 	val int = RegInit(false.B)
-	val excp_code = RegInit(0.U(MCause.EXCP_LEN))
+	val excp_code = RegInit(0.U(MCause.EXCP_LEN.W))
 
 	val mcause = Wire(UInt(MXLEN.W))
 	mcause := Cat(int, Fill(MXLEN - 1 - MCause.EXCP_LEN, 0.U), excp_code)
 
 	io.rdata := mcause
 	addSource(mcause, "mcause")
+
+	// update
+	val do_trap = WireInit(false.B)
+	val mcause_code = WireInit(0.U(MCause.EXCP_LEN.W))
+	val mcause_int = WireInit(false.B)
+	addSink(do_trap, "do_trap")
+	addSink(mcause_code, "mcause_code")
+	addSink(mcause_int, "mcause_int")
+	when (do_trap) {
+		int := mcause_int
+		excp_code := mcause_code
+	}
 }
 
 class MtVal extends CsrReg(CSRs.mtval) {
-	val mtval = WireInit(0.U(MXLEN.W))
+	val mtval = RegInit(0.U(MXLEN.W))
 
 	io.rdata := mtval
-	addSource(mtval, "mtval")
+	addSource(mtval, "mtval", disableDedup=true)
+
+	when (io.wen) {
+		mtval := io.wdata
+	}
+}
+
+object MI {
+	val MI_LEN 		= 16
+	val SSI 		= 1 		// S-level soft
+	val MSI 		= 3 		// M-level soft
+	val STI 		= 5 		// S-level timer
+	val MTI 		= 7 		// M-level timer
+	val SEI 		= 9 		// S-level external
+	val MEI 		= 11 		// M-level external
 }
 
 class Mip extends CsrReg(CSRs.mip) {
 	val mip = WireInit(0.U(MXLEN.W))
 
 	io.rdata := mip
-	addSource(mip, "mip")
+	addSource(mip, "mip", disableDedup=true)
 }
 
 class Mie extends CsrReg(CSRs.mie) {
-	val mie = WireInit(0.U(MXLEN.W))
+	val msie = RegInit(false.B)
+	val mtie = RegInit(false.B)
+	val meie = RegInit(false.B)
 
-	io.rdata := mie
-	addSource(mie, "mie")
+	val mie = WireInit(0.U(MXLEN.W))
+	val mie_vec = VecInit(mie.asBools)
+	for (i <- 0 until mie_vec.length) {
+		mie_vec(i) := false.B
+	}
+	mie_vec(MI.MSI) := msie
+	mie_vec(MI.MTI) := mtie
+	mie_vec(MI.MEI) := meie
+
+	io.rdata := mie_vec.asUInt
+	val result = WireInit(mie_vec.asUInt)
+	addSource(result, "mie")
+
+	// update
+	when (io.wen) {
+		msie := io.wdata(MI.MSI)
+		mtie := io.wdata(MI.MTI)
+		meie := io.wdata(MI.MEI)
+	}
 }

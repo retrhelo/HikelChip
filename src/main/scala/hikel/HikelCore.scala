@@ -4,14 +4,10 @@ package hikel
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.BoringUtils._
 
 import hikel.Config._
 import hikel.stage._
 import hikel.fufu._
-
-// difftest
-import difftest._
 
 class HikelCore(val hartid: Int) extends Module {
 	val io = IO(new Bundle {
@@ -70,74 +66,34 @@ class HikelCore(val hartid: Int) extends Module {
 	// fetch
 	fetch.io.enable := true.B
 	fetch.io.clear := false.B
-	fetch.io.trap := false.B
+	fetch.io.trap := trapctrl.io.do_trap
 
 	// decode
 	decode.io.enable := true.B
 	decode.io.clear := brcond.io.change_pc
-	decode.io.trap := false.B
+	decode.io.trap := trapctrl.io.do_trap
 
 	// issue
 	issue.io.enable := true.B
 	issue.io.clear := brcond.io.change_pc
-	issue.io.trap := false.B
+	issue.io.trap := trapctrl.io.do_trap
 
 	// execute
 	execute.io.enable := true.B
 	execute.io.clear := false.B
-	execute.io.trap := false.B
+	execute.io.trap := trapctrl.io.do_trap
 
 	// commit
 	commit.io.enable := true.B
 	commit.io.clear := false.B
-	commit.io.trap := false.B
+	commit.io.trap := trapctrl.io.do_trap
 
 	// CSR
 	private val csrfile = Module(new CsrFile(hartid));
 	issue.io.csrfile_read <> csrfile.io.read
 	commit.io.csrfile_write <> csrfile.io.write
-	if (YSYX_DIFFTEST) {
-		val mstatus 		= WireInit(0.U(MXLEN.W))
-		val mcause 			= WireInit(0.U(MXLEN.W))
-		val mepc 			= WireInit(0.U(MXLEN.W))
-		val mip 			= WireInit(0.U(MXLEN.W))
-		val mie 			= WireInit(0.U(MXLEN.W))
-		val mscratch 		= WireInit(0.U(MXLEN.W))
-		val mideleg 		= WireInit(0.U(MXLEN.W))
-		val medeleg 		= WireInit(0.U(MXLEN.W))
-		val mtval 			= WireInit(0.U(MXLEN.W))
-		val mtvec 			= WireInit(0.U(MXLEN.W))
-		addSink(mstatus, "mstatus")
-		addSink(mcause, "mcause")
-		addSink(mepc, "mepc")
-		addSink(mip, "mip")
-		addSink(mie, "mie")
-		addSink(mscratch, "mscratch")
-		addSink(mideleg, "mideleg")
-		addSink(medeleg, "medeleg")
-		addSink(mtval, "mtval")
-		addSink(mtvec, "mtvec")
 
-		val difftest = Module(new DifftestCSRState)
-		difftest.io.clock 		:= clock
-		difftest.io.coreid 		:= 0.U
-		difftest.io.mstatus 	:= mstatus
-		difftest.io.mcause 		:= mcause
-		difftest.io.mepc 		:= mepc
-		difftest.io.sstatus 	:= 0.U
-		difftest.io.scause 		:= 0.U
-		difftest.io.sepc 		:= 0.U
-		difftest.io.satp 		:= 0.U
-		difftest.io.mip 		:= mip
-		difftest.io.mie 		:= mie
-		difftest.io.mscratch 	:= mscratch
-		difftest.io.sscratch 	:= 0.U
-		difftest.io.mideleg 	:= mideleg
-		difftest.io.medeleg 	:= medeleg
-		difftest.io.mtval 		:= mtval
-		difftest.io.stval 		:= 0.U
-		difftest.io.mtvec 		:= RegNext(mtvec)
-		difftest.io.stvec 		:= 0.U
-		difftest.io.priviledgeMode := "b11".U
-	}
+	lazy val trapctrl = Module(new TrapCtrl)
+	trapctrl.io.excp.do_excp 	:= commit.io.out.excp
+	trapctrl.io.excp.code 		:= commit.io.out.code
 }

@@ -61,9 +61,15 @@ class Decode extends Stage {
 		io.out.jb_use 	:= decoder.io.out.branch || 
 				decoder.io.out.jal || decoder.io.out.jalr
 
+		val reg_excp = RegInit(false.B)
+		val reg_code = RegInit(0.U(MCause.EXCP_LEN.W))
+		when (enable) {
+			reg_excp 	:= io.in.excp
+			reg_code 	:= io.in.code
+		}
 		// re-generate exception signals
-		io.out.excp 	:= io.in.excp || decoder.io.out.illegal
+		io.out.excp 	:= decoder.io.out.illegal || reg_excp
 		// as long as io.out.excp stays unasserted, the value in code is meaningless
-		io.out.code 	:= Mux(io.in.excp, io.in.code, MCause.ILL_INS)
+		io.out.code 	:= Mux(decoder.io.out.illegal, MCause.ILL_INS, reg_code)
 	}
 }

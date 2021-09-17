@@ -12,9 +12,9 @@ class StagePortIn extends Bundle {
 	val pc 		= UInt(PC.W)
 	val excp 	= Bool()
 	val code 	= UInt(EXCP_LEN.W)
+	val valid 	= Bool() 			// instruction or bubble
 
 	// for ysyx debug
-	val valid 	= Bool()
 	val inst 	= UInt(INST.W)
 }
 
@@ -39,9 +39,9 @@ class Stage extends Module {
 	rst := reset.asBool || io.clear || io.trap
 
 	withReset(rst) {
-		val reg_pc 		= RegInit(0.U)
+		val reg_pc 		= RegInit(0.U(PC.W))
 		val reg_excp 	= RegInit(false.B)
-		val reg_code 	= RegInit(0.U)
+		val reg_code 	= RegInit(0.U(EXCP_LEN.W))
 		val reg_valid 	= RegInit(false.B)
 		val reg_inst 	= RegInit(NOP)
 		when (enable) {
@@ -58,9 +58,4 @@ class Stage extends Module {
 		io.out.valid 	:= reg_valid
 		io.out.inst 	:= reg_inst
 	}
-}
-
-import chisel3.stage.ChiselStage
-object StageGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Stage, BUILD_ARG)
 }

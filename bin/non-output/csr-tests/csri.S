@@ -1,5 +1,7 @@
-# basic tests
+	.globl _entry
+_entry:
 
+# basic tests
 csrrwi a0, mscratch, 0x1f
 
 csrrci a0, mscratch, 0xa

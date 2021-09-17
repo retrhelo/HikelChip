@@ -1,3 +1,6 @@
+	.globl _entry
+_entry: 
+
 # basic tests
 li a0, 0xff
 csrrw a0, mscratch, a0

@@ -35,7 +35,7 @@ class SimTop extends Module {
 	withReset(reg_delay_reset) {
 		val hikel = Module(new HikelCore(0))
 		hikel.io.icache_ready 		:= true.B
-		hikel.io.icache_illegal 	:= true.B
+		hikel.io.icache_illegal 	:= false.B
 
 		// RAM
 		{

@@ -15,7 +15,8 @@ ASFLAGS = -c -march=rv32i -mabi=ilp32
 CSR_DIR = bin/non-output/csr-tests
 CSR_SRC = \
 	$(CSR_DIR)/csr.S \
-	$(CSR_DIR)/csri.S
+	$(CSR_DIR)/csri.S \
+	$(CSR_DIR)/exception.S
 
 SRC += $(CSR_SRC)
 OBJ = $(addsuffix .o, $(basename $(SRC)))

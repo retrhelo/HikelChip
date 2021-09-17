@@ -25,3 +25,13 @@ class MImpId extends CsrReg(CSRs.mimpid) {
 class MHartId(val hartid: Int) extends CsrReg(CSRs.mhartid) {
 	io.rdata 	:= hartid.U
 }
+
+class MIsa extends CsrReg(CSRs.misa) {
+	val EXT_I = 1 << ('I' - 'A')
+	val EXT = EXT_I
+	val extension = EXT.U(26.W)
+
+	val mxl = 2.U(2.W)
+
+	io.rdata 	:= Cat(mxl, 0.U((MXLEN - 28).W), extension)
+}

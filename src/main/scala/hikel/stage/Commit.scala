@@ -54,7 +54,7 @@ class Commit extends Stage {
 		}
 
 		// connect to regfile
-		io.regfile_write.rd_wen 	:= reg_rd_wen
+		io.regfile_write.rd_wen 	:= reg_rd_wen && !io.trap
 		io.regfile_write.rd_addr 	:= reg_rd_addr
 		io.regfile_write.rd_data 	:= reg_data1
 		// bypass for redirection
@@ -65,7 +65,7 @@ class Commit extends Stage {
 		// connect to csrfile write port
 		io.csrfile_write.addr 		:= reg_csr_addr
 		io.csrfile_write.data 		:= reg_data2
-		io.csrfile_write.wen 		:= reg_csr_use
+		io.csrfile_write.wen 		:= reg_csr_use && !io.trap
 		// bypass for redirection
 		addSource(io.csrfile_write.wen, "commit_csr_use")
 		addSource(io.csrfile_write.addr, "commit_csr_addr")
@@ -73,7 +73,7 @@ class Commit extends Stage {
 
 		// is this instruction valid?
 		val minstret_en = Wire(Bool())
-		minstret_en := enable && io.out.valid
+		minstret_en := enable && io.out.valid && !io.trap
 		addSource(minstret_en, "minstret_en")
 	}
 
@@ -84,9 +84,7 @@ class Commit extends Stage {
 		difftest.io.coreid 	:= 0.U
 		difftest.io.index 	:= 0.U
 
-		// difftest.io.valid 	:= RegNext(!(io.trap || io.in.excp))
-		// difftest.io.valid 	:= true.B
-		difftest.io.valid 	:= RegNext(io.out.pc >= BigInt("80000000", 16).U)
+		difftest.io.valid 	:= enable && io.out.valid && !io.trap
 		difftest.io.pc 		:= RegNext(io.out.pc)
 		difftest.io.instr 	:= RegNext(io.out.inst)
 		difftest.io.skip 	:= false.B
