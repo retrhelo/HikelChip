@@ -15,5 +15,7 @@ infinite_loop:
 	.globl trap_handler
 	.align 4
 trap_handler:
+	add a0, zero, 14
+
 	# well done, you've reached here
 	.word 0x6b

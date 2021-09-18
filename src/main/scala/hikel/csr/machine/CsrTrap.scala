@@ -52,10 +52,16 @@ class MStatus extends CsrReg(CSRs.mstatus) {
 	// update
 	val do_trap = WireInit(false.B)
 	addSink(do_trap, "do_trap")
+	val do_mret = WireInit(false.B)
+	addSink(do_mret, "do_mret")
 
 	when (do_trap) {
 		mie 	:= false.B
 		mpie 	:= mie
+	}
+	.elsewhen (do_mret) {
+		mie 	:= mpie
+		mpie 	:= true.B
 	}
 	.elsewhen (io.wen) {
 		mie 	:= io.wdata(MStatus.MIE)
@@ -109,23 +115,23 @@ class MScratch extends CsrReg(CSRs.mscratch) {
 }
 
 class MEpc extends CsrReg(CSRs.mepc) {
-	val mepc = RegInit(0.U((MXLEN - 2).W))
+	val mepc = RegInit(0.U((PC - 2).W))
 
 	// mepc[0] is always zero, and for those only implement IALIGN = 32, 
 	// mepc[1:0] are always zero
 	io.rdata := Cat(mepc, 0.U(2.W))
-	addSource(mepc, "mepc")
+	addSource(io.rdata, "mepc")
 
 	val do_trap = WireInit(false.B)
-	val mepc_pc = WireInit(0.U(MXLEN.W))
+	val mepc_pc = WireInit(0.U(PC.W))
 	addSink(do_trap, "do_trap")
 	addSink(mepc_pc, "mepc_pc")
 
 	when (do_trap) {
-		mepc := mepc_pc(MXLEN-1, 2)
+		mepc := mepc_pc(PC-1, 2)
 	}
 	.elsewhen (io.wen) {
-		mepc := io.wdata(MXLEN-1, 2)
+		mepc := io.wdata(PC-1, 2)
 	}
 }
 
@@ -172,9 +178,11 @@ class MCause extends CsrReg(CSRs.mcause) {
 
 	// update
 	val do_trap = WireInit(false.B)
+	val do_mret = WireInit(false.B)
 	val mcause_code = WireInit(0.U(MCause.EXCP_LEN.W))
 	val mcause_int = WireInit(false.B)
 	addSink(do_trap, "do_trap")
+	addSink(do_mret, "do_mret")
 	addSink(mcause_code, "mcause_code")
 	addSink(mcause_int, "mcause_int")
 	when (do_trap) {

@@ -68,8 +68,12 @@ class Decode extends Stage {
 			reg_code 	:= io.in.code
 		}
 		// re-generate exception signals
-		io.out.excp 	:= decoder.io.out.illegal || reg_excp
+		io.out.excp 	:= decoder.io.out.ebreak || decoder.io.out.ecall || 
+				decoder.io.out.illegal || reg_excp
 		// as long as io.out.excp stays unasserted, the value in code is meaningless
-		io.out.code 	:= Mux(decoder.io.out.illegal, MCause.ILL_INS, reg_code)
+		io.out.code 	:= Mux(reg_excp, reg_code, 
+				Mux(decoder.io.out.ebreak, MCause.BREAKPOINT, 
+				Mux(decoder.io.out.ecall, MCause.ENV_CALL_M, MCause.ILL_INS)))
+		io.out.mret 	:= decoder.io.out.mret
 	}
 }

@@ -1,0 +1,40 @@
+
+bin/non-output/csr-tests/csr.out:     file format elf64-littleriscv
+bin/non-output/csr-tests/csr.out
+
+
+Disassembly of section .text:
+
+0000000080000000 <_entry>:
+    80000000:	0ff00513          	li	a0,255
+    80000004:	34051573          	csrrw	a0,mscratch,a0
+    80000008:	00a00513          	li	a0,10
+    8000000c:	34053573          	csrrc	a0,mscratch,a0
+    80000010:	0f000513          	li	a0,240
+    80000014:	34052573          	csrrs	a0,mscratch,a0
+    80000018:	0ff00513          	li	a0,255
+    8000001c:	340515f3          	csrrw	a1,mscratch,a0
+    80000020:	00a00513          	li	a0,10
+    80000024:	34053673          	csrrc	a2,mscratch,a0
+    80000028:	0f000513          	li	a0,240
+    8000002c:	340526f3          	csrrs	a3,mscratch,a0
+    80000030:	f1402573          	csrr	a0,mhartid
+    80000034:	00114537          	lui	a0,0x114
+    80000038:	5145051b          	addiw	a0,a0,1300
+    8000003c:	34051073          	csrw	mscratch,a0
+    80000040:	0000006b          	0x6b
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	1941                	addi	s2,s2,-16
+   2:	0000                	unimp
+   4:	7200                	ld	s0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <BASE_ADDRESS-0x7fffffec>
+   c:	0000000f          	fence	unknown,unknown
+  10:	7205                	lui	tp,0xfffe1
+  12:	3676                	fld	fa2,376(sp)
+  14:	6934                	ld	a3,80(a0)
+  16:	7032                	0x7032
+  18:	0030                	addi	a2,sp,8

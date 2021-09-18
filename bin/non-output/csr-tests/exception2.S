@@ -8,7 +8,7 @@ _entry:
 	li a0, 127
 	li a1, 1
 
-	ebreak
+	ecall
 
 	add a0, a0, a1
 

@@ -1,0 +1,37 @@
+
+bin/non-output/csr-tests/exception.out:     file format elf64-littleriscv
+bin/non-output/csr-tests/exception.out
+
+
+Disassembly of section .text:
+
+0000000080000000 <_entry>:
+    80000000:	00000297          	auipc	t0,0x0
+    80000004:	02028293          	addi	t0,t0,32 # 80000020 <trap_handler>
+    80000008:	30529073          	csrw	mtvec,t0
+    8000000c:	07f00513          	li	a0,127
+    80000010:	00100593          	li	a1,1
+    80000014:	5678                	lw	a4,108(a2)
+    80000016:	1234                	addi	a3,sp,296
+    80000018:	00b50533          	add	a0,a0,a1
+    8000001c:	0000006b          	0x6b
+
+0000000080000020 <trap_handler>:
+    80000020:	00b50533          	add	a0,a0,a1
+    80000024:	0000006b          	0x6b
+	...
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	1941                	addi	s2,s2,-16
+   2:	0000                	unimp
+   4:	7200                	ld	s0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <BASE_ADDRESS-0x7fffffec>
+   c:	0000000f          	fence	unknown,unknown
+  10:	7205                	lui	tp,0xfffe1
+  12:	3676                	fld	fa2,376(sp)
+  14:	6934                	ld	a3,80(a0)
+  16:	7032                	0x7032
+  18:	0030                	addi	a2,sp,8

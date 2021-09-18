@@ -9,6 +9,8 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
+import freechips.rocketchip.rocket.Instructions.MRET
+
 import hikel._
 import hikel.Config._
 
@@ -22,6 +24,8 @@ class CommitPortIn extends StagePortIn {
 	val csr_use 	= Bool()
 	val lsu_use 	= Bool()
 
+	val mret 		= Bool()
+
 	val data1 		= UInt(MXLEN.W)		// write to regfile
 	val data2 		= UInt(MXLEN.W)		// write to CSR/LSU
 }
@@ -30,6 +34,8 @@ class CommitPort extends StagePort {
 	override lazy val in = Input(new CommitPortIn)
 	val regfile_write = Flipped(new RegFileWrite)
 	val csrfile_write = Flipped(new CsrFileWrite)
+
+	val mret = Output(Bool())
 }
 
 class Commit extends Stage {
@@ -41,6 +47,7 @@ class Commit extends Stage {
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
+		val reg_mret 		= RegInit(false.B)
 		val reg_data1 		= RegInit(0.U(MXLEN.W))
 		val reg_data2 		= RegInit(0.U(MXLEN.W))
 		when (enable) {
@@ -49,9 +56,16 @@ class Commit extends Stage {
 			reg_rd_wen 		:= io.in.rd_wen
 			reg_csr_use 	:= io.in.csr_use
 			reg_lsu_use 	:= io.in.lsu_use
+			reg_mret 		:= io.in.mret
 			reg_data1 		:= io.in.data1
 			reg_data2 		:= io.in.data2
 		}
+
+		io.mret := reg_mret
+		addSource(io.mret, "do_mret")
+
+		val mepc_pc = io.out.pc
+		addSource(mepc_pc, "mepc_pc")
 
 		// connect to regfile
 		io.regfile_write.rd_wen 	:= reg_rd_wen && !io.trap
@@ -79,25 +93,25 @@ class Commit extends Stage {
 
 	// for YSYX project
 	if (YSYX_DIFFTEST) {
-		val difftest = Module(new DifftestInstrCommit)
-		difftest.io.clock 	:= clock
-		difftest.io.coreid 	:= 0.U
-		difftest.io.index 	:= 0.U
+		{	// connect to instrcommit
+			val instr = Module(new DifftestInstrCommit)
+			instr.io.clock 		:= clock
+			instr.io.coreid 	:= 0.U
+			instr.io.index 		:= 0.U
 
-		difftest.io.valid 	:= enable && io.out.valid && !io.trap
-		difftest.io.pc 		:= RegNext(io.out.pc)
-		difftest.io.instr 	:= RegNext(io.out.inst)
-		difftest.io.skip 	:= false.B
-		difftest.io.skip 	:= false.B
-		difftest.io.isRVC 	:= false.B
-		difftest.io.scFailed := false.B
+			instr.io.valid 		:= RegNext(enable && io.out.valid)
+			instr.io.pc 		:= RegNext(io.out.pc)
+			instr.io.instr 		:= RegNext(io.out.inst)
+			instr.io.skip 		:= false.B
+			instr.io.isRVC 		:= false.B
+			instr.io.scFailed 	:= false.B
 
-		difftest.io.wen 	:= RegNext(io.regfile_write.rd_wen)
-		difftest.io.wdata 	:= RegNext(io.regfile_write.rd_data)
-		difftest.io.wdest 	:= RegNext(io.regfile_write.rd_addr)
+			instr.io.wen 		:= RegNext(io.regfile_write.rd_wen)
+			instr.io.wdata 		:= RegNext(io.regfile_write.rd_data)
+			instr.io.wdest 		:= RegNext(io.regfile_write.rd_addr)
+		}
 
-		// connect to trap
-		{
+		{	// connect to trap
 			val cycleCnt = WireInit(0.U(MXLEN.W))
 			val instrCnt = WireInit(0.U(MXLEN.W))
 			addSink(cycleCnt, "mcycle")

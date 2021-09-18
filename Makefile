@@ -16,10 +16,8 @@ ASFLAGS = -march=rv64i -mabi=lp64 -c
 CSR_DIR = bin/non-output/csr-tests
 CSR_SRC = \
 	$(CSR_DIR)/csr.S \
-	$(CSR_DIR)/csri.S \
 	$(CSR_DIR)/exception.S \
 	$(CSR_DIR)/ecall.S \
-	$(CSR_DIR)/ebreak.S \
 	$(CSR_DIR)/exception2.S 
 
 SRC += $(CSR_SRC)
@@ -31,4 +29,5 @@ bin_test: $(BIN)
 %.bin: %.o
 	$(LD) -N -e _entry -Tbin/linker.ld $< -o $(addsuffix .out, $(basename $<))
 	$(OBJCOPY) $(addsuffix .out, $(basename $<)) --strip-all -O binary $@
+	$(OBJDUMP) -Da $(addsuffix .out, $(basename $<)) >$(addsuffix .txt, $(basename $<))
 	rm $(addsuffix .out, $(basename $<))

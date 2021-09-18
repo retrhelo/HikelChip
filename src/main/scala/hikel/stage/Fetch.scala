@@ -23,6 +23,7 @@ class FetchPort extends StagePort {
 	// extra-pc option
 	val change_pc 	= Input(Bool())
 	val new_pc 		= Input(UInt(PC.W))
+	val mret 		= Input(Bool())
 }
 
 class Fetch extends Stage {
@@ -37,13 +38,21 @@ class Fetch extends Stage {
 	withReset(rst) {
 		val reg_pc = RegInit(ENTRY_PC)
 		val next_pc = reg_pc + 4.U
-		val mtvec = WireInit(0.U(MXLEN.W))
+		val mtvec = WireInit(0.U(PC.W))
+		val mepc = WireInit(0.U(PC.W))
+		val do_mret = WireInit(false.B)
 		addSink(mtvec, "mtvec")
+		addSink(mepc, "mepc")
+		addSink(do_mret, "do_mret")
 		when (io.trap) {
 			reg_pc := mtvec
 		}
+		.elsewhen (do_mret) {
+			reg_pc := mepc
+		}
 		.elsewhen (enable) {
-			reg_pc := Mux(io.change_pc, io.new_pc, next_pc)
+			reg_pc := Mux(io.change_pc, io.new_pc, 
+					Mux(io.mret, mepc, next_pc))
 		}
 
 		// connect to icache

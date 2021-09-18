@@ -26,69 +26,70 @@ object InstDecode {
 	//               illegal                         fence
 	//                 | lui                      ebreak| wen
 	//                 |  | auipc     br        ecall|  |  | imm_type
-	//                 |  |  | jal    |       csr |  |  |  |    |   rs2
-	//                 |  |  |  | jalr|   store|  |  |  |  |    |    | rs1   word
-	//                 |  |  |  |  |  | load|  |  |  |  |  |    |    |  |arith|
-	val default = List(Y, N, N, N, N, N, N, N, N, N, N, N, N, IMM_X, N, N, N, N)
+	//                 |  |  | jal    |       csr |  |  |  |    |   rs2        mret
+	//                 |  |  |  | jalr|   store|  |  |  |  |    |    | rs1   word|
+	//                 |  |  |  |  |  | load|  |  |  |  |  |    |    |  |arith|  |
+	val default = List(Y, N, N, N, N, N, N, N, N, N, N, N, N, IMM_X, N, N, N, N, N)
 	val table = Array(
-		LUI    -> List(N, Y, N, N, N, N, N, N, N, N, N, N, Y, IMM_U, N, Y, N, N), 
-		AUIPC  -> List(N, N, Y, N, N, N, N, N, N, N, N, N, Y, IMM_U, N, N, N, N), 
-		JAL    -> List(N, N, N, Y, N, N, N, N, N, N, N, N, Y, IMM_J, N, N, N, N), 
-		JALR   -> List(N, N, N, N, Y, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		BEQ    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N), 
-		BNE    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N), 
-		BLT    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N), 
-		BGE    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N), 
-		BLTU   -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N), 
-		BGEU   -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N), 
-		LB     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		LH     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		LW     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		LBU    -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		LHU    -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		LWU    -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		LD     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		SB     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N), 
-		SH     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N), 
-		SW     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N), 
-		SD     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N), 
-		ADDI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		ADDIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, Y), 
-		SLTI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		SLTIU  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		XORI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		ORI    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		ANDI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		SLLI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		SLLIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, Y), 
-		SRLI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N), 
-		SRLIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, Y), 
-		SRAI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, Y, N), 
-		SRAIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, Y, Y), 
-		ADD    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		ADDW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, Y), 
-		SUB    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, N), 
-		SUBW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, Y), 
-		SLL    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		SLLW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, Y), 
-		SLT    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		SLTU   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		XOR    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		SRL    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		SRLW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, Y), 
-		SRA    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, N), 
-		SRAW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, Y), 
-		OR     -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		AND    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N), 
-		FENCE  -> List(N, N, N, N, N, N, N, N, N, N, N, Y, N, IMM_X, N, N, N, N), 
-		ECALL  -> List(N, N, N, N, N, N, N, N, N, Y, N, N, N, IMM_X, N, N, N, N), 
-		EBREAK -> List(N, N, N, N, N, N, N, N, N, N, Y, N, N, IMM_X, N, N, N, N), 
-		CSRRW  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N), 
-		CSRRS  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N), 
-		CSRRC  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N), 
-		CSRRWI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N), 
-		CSRRSI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N), 
-		CSRRCI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N), 
+		LUI    -> List(N, Y, N, N, N, N, N, N, N, N, N, N, Y, IMM_U, N, Y, N, N, N), 
+		AUIPC  -> List(N, N, Y, N, N, N, N, N, N, N, N, N, Y, IMM_U, N, N, N, N, N), 
+		JAL    -> List(N, N, N, Y, N, N, N, N, N, N, N, N, Y, IMM_J, N, N, N, N, N), 
+		JALR   -> List(N, N, N, N, Y, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		BEQ    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N, N), 
+		BNE    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N, N), 
+		BLT    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N, N), 
+		BGE    -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N, N), 
+		BLTU   -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N, N), 
+		BGEU   -> List(N, N, N, N, N, Y, N, N, N, N, N, N, N, IMM_B, Y, Y, N, N, N), 
+		LB     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		LH     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		LW     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		LBU    -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		LHU    -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		LWU    -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		LD     -> List(N, N, N, N, N, N, Y, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		SB     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N, N), 
+		SH     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N, N), 
+		SW     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N, N), 
+		SD     -> List(N, N, N, N, N, N, N, Y, N, N, N, N, N, IMM_S, Y, Y, N, N, N), 
+		ADDI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		ADDIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, Y, N), 
+		SLTI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		SLTIU  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		XORI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		ORI    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		ANDI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		SLLI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		SLLIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, Y, N), 
+		SRLI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, N, N), 
+		SRLIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, N, Y, N), 
+		SRAI   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, Y, N, N), 
+		SRAIW  -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_I, N, Y, Y, Y, N), 
+		ADD    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		ADDW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, Y, N), 
+		SUB    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, N, N), 
+		SUBW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, Y, N), 
+		SLL    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		SLLW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, Y, N), 
+		SLT    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		SLTU   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		XOR    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		SRL    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		SRLW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, Y, N), 
+		SRA    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, N, N), 
+		SRAW   -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, Y, Y, N), 
+		OR     -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		AND    -> List(N, N, N, N, N, N, N, N, N, N, N, N, Y, IMM_X, Y, Y, N, N, N), 
+		FENCE  -> List(N, N, N, N, N, N, N, N, N, N, N, Y, N, IMM_X, N, N, N, N, N), 
+		ECALL  -> List(N, N, N, N, N, N, N, N, N, Y, N, N, N, IMM_X, N, N, N, N, N), 
+		EBREAK -> List(N, N, N, N, N, N, N, N, N, N, Y, N, N, IMM_X, N, N, N, N, N), 
+		MRET   -> List(N, N, N, N, N, N, N, N, N, N, N, N, N, IMM_X, N, N, N, N, Y), 
+		CSRRW  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N, N), 
+		CSRRS  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N, N), 
+		CSRRC  -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_X, N, Y, N, N, N), 
+		CSRRWI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N, N), 
+		CSRRSI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N, N), 
+		CSRRCI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N, N), 
 	)
 }
 import InstDecode._
@@ -105,6 +106,7 @@ class InstDecodeOut extends Bundle {
 	val csr 		= Bool()	// when use csr, it's always written
 	val ecall 		= Bool()
 	val ebreak 		= Bool()
+	val mret 		= Bool()
 	val fence 		= Bool()
 
 	val rd_wen 		= Bool()
@@ -142,10 +144,5 @@ class InstDecode extends RawModule {
 	io.out.rs1_use 	:= list(15)
 	io.out.arith 	:= list(16)
 	io.out.word 	:= list(17)
-}
-
-
-import chisel3.stage.ChiselStage
-object InstDecodeGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new InstDecode, BUILD_ARG)
+	io.out.mret 	:= list(18)
 }

@@ -45,6 +45,8 @@ class HikelCore(val hartid: Int) extends Module {
 	// jump/branch signals
 	fetch.io.change_pc 		:= brcond.io.change_pc
 	fetch.io.new_pc 		:= brcond.io.new_pc
+	// mret
+	fetch.io.mret 			:= commit.io.mret
 
 	// no extra connections for decode stage
 
@@ -70,22 +72,22 @@ class HikelCore(val hartid: Int) extends Module {
 
 	// decode
 	decode.io.enable := true.B
-	decode.io.clear := brcond.io.change_pc
+	decode.io.clear := brcond.io.change_pc || commit.io.mret
 	decode.io.trap := trapctrl.io.do_trap
 
 	// issue
 	issue.io.enable := true.B
-	issue.io.clear := brcond.io.change_pc
+	issue.io.clear := brcond.io.change_pc || commit.io.mret
 	issue.io.trap := trapctrl.io.do_trap
 
 	// execute
 	execute.io.enable := true.B
-	execute.io.clear := false.B
+	execute.io.clear := commit.io.mret
 	execute.io.trap := trapctrl.io.do_trap
 
 	// commit
 	commit.io.enable := true.B
-	commit.io.clear := false.B
+	commit.io.clear := commit.io.mret
 	commit.io.trap := trapctrl.io.do_trap
 
 	// CSR

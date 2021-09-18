@@ -25,6 +25,8 @@ class ExecutePortIn extends StagePortIn {
 	val rd_wen 			= Bool()
 	val csr_use 		= Bool()
 	val lsu_use 		= Bool()
+
+	val mret 			= Bool()
 }
 
 class ExecutePort extends StagePort {
@@ -47,6 +49,7 @@ class Execute extends Stage {
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
+		val reg_mret 		= RegInit(false.B)
 		when (enable) {
 			reg_rs1_data 	:= io.in.rs1_data
 			reg_rs2_data 	:= io.in.rs2_data
@@ -57,6 +60,7 @@ class Execute extends Stage {
 			reg_rd_wen 		:= io.in.rd_wen
 			reg_csr_use 	:= io.in.csr_use
 			reg_lsu_use 	:= io.in.lsu_use
+			reg_mret 		:= io.in.mret
 		}
 
 		// connect to alu
@@ -72,9 +76,8 @@ class Execute extends Stage {
 		io.out.rd_wen 	:= reg_rd_wen
 		io.out.csr_use 	:= reg_csr_use
 		io.out.lsu_use 	:= reg_lsu_use
+		io.out.mret 	:= reg_mret
 
-		// io.out.data1 	:= io.alu.res
-		// io.out.data2 	:= 0.U
 		io.out.data1 	:= Mux(reg_csr_use, reg_rs1_data, io.alu.res)
 		io.out.data2 	:= Mux(reg_uop(3), reg_rs2_data, io.alu.res)
 

@@ -1,0 +1,36 @@
+
+bin/non-output/csr-tests/ecall.out:     file format elf64-littleriscv
+bin/non-output/csr-tests/ecall.out
+
+
+Disassembly of section .text:
+
+0000000080000000 <_entry>:
+    80000000:	00000297          	auipc	t0,0x0
+    80000004:	02028293          	addi	t0,t0,32 # 80000020 <trap_handler>
+    80000008:	30529073          	csrw	mtvec,t0
+    8000000c:	00000073          	ecall
+
+0000000080000010 <infinite_loop>:
+    80000010:	0000006f          	j	80000010 <infinite_loop>
+	...
+
+0000000080000020 <trap_handler>:
+    80000020:	00e00513          	li	a0,14
+    80000024:	0000006b          	0x6b
+	...
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	1941                	addi	s2,s2,-16
+   2:	0000                	unimp
+   4:	7200                	ld	s0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <BASE_ADDRESS-0x7fffffec>
+   c:	0000000f          	fence	unknown,unknown
+  10:	7205                	lui	tp,0xfffe1
+  12:	3676                	fld	fa2,376(sp)
+  14:	6934                	ld	a3,80(a0)
+  16:	7032                	0x7032
+  18:	0030                	addi	a2,sp,8

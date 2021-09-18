@@ -29,6 +29,8 @@ class IssuePortIn extends StagePortIn {
 	val csr_use 		= Bool()
 	val lsu_use 		= Bool()
 	val jb_use 			= Bool()
+
+	val mret 			= Bool()
 }
 
 class IssuePort extends StagePort {
@@ -61,6 +63,7 @@ class Issue extends Stage {
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
 		val reg_jb_use 		= RegInit(false.B)
+		val reg_mret 		= RegInit(false.B)
 		when (enable) {
 			reg_rs1_addr 	:= io.in.rs1_addr
 			reg_rs1_use 	:= io.in.rs1_use
@@ -74,6 +77,7 @@ class Issue extends Stage {
 			reg_csr_use 	:= io.in.csr_use
 			reg_lsu_use 	:= io.in.lsu_use
 			reg_jb_use 		:= io.in.jb_use
+			reg_mret 		:= io.in.mret
 		}
 
 		// connect to regfile
@@ -173,5 +177,6 @@ class Issue extends Stage {
 		io.out.rd_wen 		:= reg_rd_wen
 		io.out.csr_use 		:= reg_csr_use
 		io.out.lsu_use 		:= reg_lsu_use
+		io.out.mret 		:= reg_mret
 	}
 }

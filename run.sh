@@ -6,6 +6,7 @@ IMG_DIR=bin
 export NOOP_HOME
 
 images=`ls ${IMG_DIR}/non-output/riscv-tests/*.bin`
+images="${images} `ls ${IMG_DIR}/non-output/csr-tests/*.bin`"
 
 help() {
 	echo "Please remember: 指揮官、わたしがいれば十分ですよ。"
