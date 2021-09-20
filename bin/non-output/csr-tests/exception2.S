@@ -19,7 +19,7 @@ _entry:
 	.globl trap_handler
 	.align 4
 trap_handler:
-	# change mepc to jump ebreak
+	# change mepc to jump ecall
 	csrr t1, mepc
 	addi t1, t1, 4
 	csrw mepc, t1
