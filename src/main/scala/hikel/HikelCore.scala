@@ -11,10 +11,13 @@ import hikel.fufu._
 
 class HikelCore(val hartid: Int) extends Module {
 	val io = IO(new Bundle {
-		val pc 		= Output(UInt(PC.W))
-		val icache_ready 	= Input(Bool())
-		val icache_illegal 	= Input(Bool())
-		val inst 			= Input(UInt(INST.W))
+		val iread = Flipped(new LsuRead)
+		val dread = Flipped(new LsuRead)
+		val dwrite = Flipped(new LsuWrite)
+
+		val int_soft = Input(Bool())
+		val int_timer = Input(Bool())
+		val int_extern = Input(Bool())
 	})
 
 	// stages
@@ -38,10 +41,8 @@ class HikelCore(val hartid: Int) extends Module {
 	commit.io.in <> execute.io.out
 
 	// extra connections for Fetch
-	io.pc := fetch.io.fetch_pc
-	fetch.io.fetch_inst 	:= io.inst
-	fetch.io.fetch_ready 	:= io.icache_ready
-	fetch.io.fetch_illegal 	:= io.icache_illegal
+	// connect to icache
+	//! TODO
 	// jump/branch signals
 	fetch.io.change_pc 		:= brcond.io.change_pc
 	fetch.io.new_pc 		:= brcond.io.new_pc
@@ -91,11 +92,20 @@ class HikelCore(val hartid: Int) extends Module {
 	commit.io.trap := trapctrl.io.do_trap
 
 	// CSR
-	private val csrfile = Module(new CsrFile(hartid));
+	private val csrfile = Module(new CsrFile(hartid))
 	issue.io.csrfile_read <> csrfile.io.read
 	commit.io.csrfile_write <> csrfile.io.write
-
+	// trap control
 	lazy val trapctrl = Module(new TrapCtrl)
 	trapctrl.io.excp.do_excp 	:= commit.io.out.excp
 	trapctrl.io.excp.code 		:= commit.io.out.code
+}
+
+class HikelTop extends Module {
+	val io = IO(new Bundle {
+		val read = Flipped(new LsuRead)
+		val write = Flipped(new LsuWrite)
+	})
+
+	val hart0 = Module(new HikelCore(0))
 }

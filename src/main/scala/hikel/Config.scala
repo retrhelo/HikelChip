@@ -11,8 +11,11 @@ object Config {
 
 	val INST 		= 32
 	val UOP 		= 3
-
 	val PC 			= 32
+
+	// Though HARTNUM is preserved here for future configuration, 
+	// HikelChip's current design DOES NOT support multiple harts. 
+	val HARTNUM 	= 1
 
 	val BUILD_ARG 	= Array("-td", "./build")
 
