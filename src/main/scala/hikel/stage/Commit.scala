@@ -13,6 +13,9 @@ import freechips.rocketchip.rocket.Instructions.MRET
 
 import hikel._
 import hikel.Config._
+import hikel.util.ReadyValid
+import hikel.fufu._
+import hikel.csr.machine.MCause._
 
 import difftest._
 
@@ -23,10 +26,11 @@ class CommitPortIn extends StagePortIn {
 	val rd_wen 		= Bool()
 	val csr_use 	= Bool()
 	val lsu_use 	= Bool()
+	val uop 		= UInt(5.W)
 
 	val mret 		= Bool()
 
-	val data1 		= UInt(MXLEN.W)		// write to regfile
+	val data1 		= UInt(MXLEN.W)		// write to regfile, or as the address of lsu
 	val data2 		= UInt(MXLEN.W)		// write to CSR/LSU
 }
 
@@ -34,8 +38,10 @@ class CommitPort extends StagePort {
 	override lazy val in = Input(new CommitPortIn)
 	val regfile_write = Flipped(new RegFileWrite)
 	val csrfile_write = Flipped(new CsrFileWrite)
+	val dwrite = ReadyValid(new LsuWrite)
 
 	val mret = Output(Bool())
+	val hshake = Output(Bool()) 		// the handshake is successful
 }
 
 class Commit extends Stage {
@@ -47,6 +53,7 @@ class Commit extends Stage {
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
+		val reg_uop 		= RegInit(0.U(5.W))
 		val reg_mret 		= RegInit(false.B)
 		val reg_data1 		= RegInit(0.U(MXLEN.W))
 		val reg_data2 		= RegInit(0.U(MXLEN.W))
@@ -56,6 +63,7 @@ class Commit extends Stage {
 			reg_rd_wen 		:= io.in.rd_wen
 			reg_csr_use 	:= io.in.csr_use
 			reg_lsu_use 	:= io.in.lsu_use
+			reg_uop 		:= io.in.uop
 			reg_mret 		:= io.in.mret
 			reg_data1 		:= io.in.data1
 			reg_data2 		:= io.in.data2
@@ -84,6 +92,25 @@ class Commit extends Stage {
 		addSource(io.csrfile_write.wen, "commit_csr_use")
 		addSource(io.csrfile_write.addr, "commit_csr_addr")
 		addSource(io.csrfile_write.data, "commit_csr_data")
+
+		// connect to Lsu write port
+		io.dwrite.valid := reg_uop(4).asBool && reg_lsu_use
+		io.dwrite.bits.data := reg_data1
+		io.dwrite.bits.op := reg_uop(2, 0)
+		io.dwrite.bits.addr := reg_data1(31, 0)
+
+		io.hshake := !io.dwrite.valid || (io.dwrite.valid && io.dwrite.ready)
+
+		// generate exception signals
+		val reg_excp = RegInit(false.B)
+		val reg_code = RegInit(0.U(EXCP_LEN.W))
+		when (enable) {
+			reg_excp := io.in.excp
+			reg_code := io.in.code
+		}
+		io.out.excp := reg_excp || io.dwrite.bits.excp
+		io.out.code := Mux(reg_excp, reg_code, 
+				Mux(io.dwrite.bits.misalign, STORE_ADDR_MISALIGN, STORE_ACCE))
 
 		// is this instruction valid?
 		val minstret_en = Wire(Bool())

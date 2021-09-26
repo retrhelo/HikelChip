@@ -8,19 +8,19 @@ import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
 import hikel.Config._
-import hikel.csr.machine._
+import hikel.csr.machine.MCause._
+import hikel.fufu._
+import hikel.util._
 
 class FetchPort extends StagePort {
 	override lazy val out = Output(new DecodePortIn)
 
-	// connect to icahce
-	// Currently implemented simply, as we're using simulated environment
-	val fetch_pc 		= Output(UInt(PC.W))
-	val fetch_inst 		= Input(UInt(INST.W))
-	val fetch_ready 	= Input(Bool())
-	val fetch_illegal 	= Input(Bool())
+	// connect to icache
+	val iread = ReadyValid(new LsuRead)
 
-	// extra-pc option
+	val hshake = Output(Bool())
+
+	// extra pc option
 	val change_pc 	= Input(Bool())
 	val new_pc 		= Input(UInt(PC.W))
 	val mret 		= Input(Bool())
@@ -29,12 +29,12 @@ class FetchPort extends StagePort {
 class Fetch extends Stage {
 	override lazy val io = IO(new FetchPort)
 
-	// rewrite enable
-	enable := io.enable && io.fetch_ready
-
-	private val ENTRY_PC 	= "h8000_0000".U(PC.W)
-
+	// re-define enable and rst
+	enable := io.enable
 	rst := reset.asBool || io.clear
+
+	private val ENTRY_PC = "h8000_0000".U(PC.W)
+
 	withReset(rst) {
 		val reg_pc = RegInit(ENTRY_PC)
 		val next_pc = reg_pc + 4.U
@@ -44,6 +44,7 @@ class Fetch extends Stage {
 		addSink(mtvec, "mtvec")
 		addSink(mepc, "mepc")
 		addSink(do_mret, "do_mret")
+
 		when (io.trap) {
 			reg_pc := mtvec
 		}
@@ -56,14 +57,18 @@ class Fetch extends Stage {
 		}
 
 		// connect to icache
-		io.fetch_pc := reg_pc
+		io.iread.valid := true.B
+		io.iread.bits.addr := reg_pc
+		io.iread.bits.op := "b10".U
+
+		io.hshake := io.iread.valid && io.iread.ready
 
 		// connect to Decode
-		io.out.inst 	:= io.fetch_inst
+		val data = io.iread.bits.data
+		io.out.inst := Mux(reg_pc(2), data(63, 32), data(31, 0))
 
-		io.out.pc 		:= reg_pc
-		io.out.excp 	:= io.fetch_illegal && io.out.valid
-		io.out.code 	:= MCause.INS_ACCE
-		io.out.valid 	:= RegNext(true.B)
+		// exception generation
+		io.out.excp := io.iread.bits.excp
+		io.out.code := Mux(io.iread.bits.misalign, INS_ADDR_MISALIGN, INS_ACCE)
 	}
 }

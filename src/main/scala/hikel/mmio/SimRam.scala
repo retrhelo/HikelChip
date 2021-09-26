@@ -3,6 +3,7 @@
 package hikel.mmio
 
 import chisel3._
+import chisel3.util._
 
 import hikel.Config._
 import hikel.fufu._
@@ -31,14 +32,17 @@ class SimRam extends LsuUnit {
 	ram.io.clk := clock
 	ram.io.en := true.B
 
+	val raddr = Cat(0.U(60.W), io.read.bits.addr(30, 3))
+	val waddr = Cat(0.U(60.W), io.write.bits.addr(30, 3))
+
 	/* READ from RAM */
 	io.read.ready := true.B
-	ram.io.rIdx := io.read.bits.addr
+	ram.io.rIdx := raddr
 	io.read.bits.rdata := ram.io.rdata
 
 	/* WRITE to RAM */
 	io.write.ready := true.B
-	ram.io.wIdx := io.write.bits.addr
+	ram.io.wIdx := waddr
 	ram.io.wdata := io.write.bits.wdata
 	ram.io.wmask := io.write.bits.expand_wstrb
 	ram.io.wen := io.write.valid

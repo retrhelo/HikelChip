@@ -62,7 +62,7 @@ class Clint(val hartnum: Int, val base: BigInt) extends LsuUnit {
 
 	io.read.ready := true.B
 	io.read.bits.rdata := 0.U
-	val raddr = io.read.bits.addr(12, 0)
+	val raddr = io.read.bits.addr(15, 3)
 	for (i <- 0 until MSIP_NUM) {
 		ren_msip(i) := raddr === MSIP(2 * i).U
 		when (ren_msip(i)) {
@@ -88,7 +88,7 @@ class Clint(val hartnum: Int, val base: BigInt) extends LsuUnit {
 	val wen_mtimecmp = Wire(Vec(hartnum, Bool()))
 
 	io.write.ready := true.B
-	val waddr = io.write.bits.addr(12, 0)
+	val waddr = io.write.bits.addr(15, 3)
 	for (i <- 0 until MSIP_NUM) {
 		wen_msip(i) := io.write.valid && (waddr === MSIP(2 * i).U)
 		when (wen_msip(i) && io.write.bits.wstrb(0).asBool) {

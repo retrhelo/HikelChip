@@ -7,12 +7,36 @@ import chisel3.util._
 
 import hikel.Config._
 import hikel.mmio._
+import hikel.mmio.MemLayout._
 import hikel.csr.machine.MCause._
 import hikel.util.ReadyValid
 
 class LsuUnitRead extends Bundle {
 	val addr 	= Output(UInt(Lsu.ADDR.W))
 	val rdata 	= Input(UInt(Lsu.DATA.W))
+
+	/*
+		uop: operation code, 3bit
+		base: base address, 3bit
+	*/
+	def genReadData(uop: UInt, base: UInt) = {
+		val signed = !uop(2)
+		val width = uop(1, 0)
+
+		val tmp = WireInit(0.U(MXLEN.W))
+		for (i <- 0 until 8) {
+			when (i.U === base) {
+				tmp := Cat(0.U((MXLEN - i * 8).W), rdata(MXLEN-1, i * 8))
+			}
+		}
+
+		MuxLookup(width, tmp, Array(
+			"b00".U -> Cat(Fill(MXLEN - 8, tmp(7) & signed), tmp(7, 0)), 
+			"b01".U -> Cat(Fill(MXLEN - 16, tmp(15) & signed), tmp(15, 0)), 
+			"b10".U -> Cat(Fill(MXLEN - 32, tmp(31) & signed), tmp(31, 0)), 
+			"b11".U -> tmp, 
+		))
+	}
 }
 class LsuUnitWrite extends Bundle {
 	val addr 	= Output(UInt(Lsu.ADDR.W))
@@ -39,17 +63,16 @@ abstract class LsuUnit extends Module {
 }
 
 
-// LSU port for CPU to access. 
 class LsuPort extends Bundle {
 	val addr 	= Output(UInt(MXLEN.W))
 	val op 		= Output(UInt(3.W))
 
 	// exception signals
-	val excp 	= Input(Bool())
-	val code 	= Input(UInt(EXCP_LEN.W))
+	val excp 		= Input(Bool())
+	val misalign 	= Input(Bool())
 
 	// generate misalign exception signal
-	def genMisalign: Bool = {
+	def isMisalign: Bool = {
 		MuxLookup(op(1, 0), false.B, Seq(
 			"b00".U -> true.B, 
 			"b01".U -> (0.U === addr(0)), 
@@ -59,10 +82,23 @@ class LsuPort extends Bundle {
 	}
 }
 class LsuRead extends LsuPort {
-	val data 		= Output(UInt(MXLEN.W))
+	val data 		= Input(UInt(MXLEN.W))
 }
 class LsuWrite extends LsuPort {
-	val data 		= Input(UInt(MXLEN.W))
+	val data 		= Output(UInt(MXLEN.W))
+
+	def genStrb: UInt = {	// generate 8bit mask
+		val base = addr(2, 0)
+		val wstrb = Wire(Vec(MXLEN / 8, Bool()))
+
+		//! TODO: the algorithm for wstrb(i) hasn't been figured out yet
+		//! 	I wonder if there's an easy way for doing this.
+		for (i <- 0 until MXLEN / 8) {
+			wstrb(i) := false.B
+		}
+
+		wstrb.asUInt
+	}
 }
 
 private class LsuReadArbiter extends Module {
@@ -84,13 +120,17 @@ private class LsuReadArbiter extends Module {
 }
 
 object Lsu {
-	val ADDR 		= 32 - log2Ceil(MASK)
+	val ADDR 		= 32
 	val DATA 		= MXLEN
 	lazy val MASK 	= MXLEN / 8
 
 	/* Memory Layout:
-		RAM 		(0x8000_0000, ??K, cached)
-		CLINT 		(0x0200_0000, 4K)
+		RAM 		(0x8000_0000, 0x8fff_ffff)
+		CHIPLINK 	(0x4000_0000, 0x7fff_ffff)
+		SPI-flash 	(0x3000_0000, 0x3fff_ffff)
+		SPI 		(0x1000_1000, 0x1000_1fff)
+		UART 		(0x1000_0000, 0x1000_0fff)
+		CLINT 		(0x0200_0000, 0x0200_ffff)
 	*/
 }
 class Lsu extends Module {
@@ -101,6 +141,7 @@ class Lsu extends Module {
 
 		// connect to CLINT
 		val clint = Flipped(new ClintPort(HARTNUM))
+		val ram = Flipped(new SimRamPort)
 	})
 
 	val read = Wire(ReadyValid(new LsuRead));
@@ -110,6 +151,11 @@ class Lsu extends Module {
 		arbiter.io.dread <> io.dread
 		read <> arbiter.io.read
 	}
+	val write = io.dwrite
+
+	/* Check Misalignment */
+	read.bits.misalign := read.bits.isMisalign
+	write.bits.misalign := write.bits.isMisalign
 
 	/* LSU should divide MMIO access into 3 parts:
 		1. Access to RAM (AXI4 and cached)
@@ -117,5 +163,43 @@ class Lsu extends Module {
 		3. Access to CLINT (built in CPU, neither AXI4 nor cached)
 	*/
 
-	
+	/* READ */
+	val ren = !read.bits.misalign && read.valid
+	val ren_clint = ren && MemLayout.sel_clint(read.bits.addr)
+	val ren_ram = ren && MemLayout.sel_ram(read.bits.addr)
+
+	// connect to CLINT
+	io.clint.read.bits.addr := read.bits.addr
+	io.clint.read.valid := ren_clint
+
+	// connect to RAM
+	io.ram.read.bits.addr := read.bits.addr
+	io.ram.read.valid := ren_clint
+
+	// select output signals
+	read.ready := Mux(ren_clint, io.clint.read.ready, io.ram.read.ready)
+	read.bits.data := Mux(ren_clint, io.clint.read.bits.genReadData(read.bits.op, read.bits.addr(2, 0)), 
+			io.ram.read.bits.genReadData(read.bits.op, read.bits.addr(2, 0)))
+	read.bits.excp := read.bits.isMisalign
+
+	/* WRITE */
+	val wen = !write.bits.misalign && write.valid
+	val wen_clint = wen && MemLayout.sel_clint(write.bits.addr)
+	val wen_ram = wen && MemLayout.sel_ram(write.bits.addr)
+
+	// connect to CLINT
+	io.clint.write.bits.addr := write.bits.addr
+	io.clint.write.bits.wdata := write.bits.data
+	io.clint.write.bits.wstrb := write.bits.genStrb
+	io.clint.write.valid := wen_clint
+
+	// connect to RAM
+	io.ram.write.bits.addr := write.bits.addr
+	io.ram.write.bits.wdata := write.bits.data
+	io.ram.write.bits.wstrb := write.bits.genStrb
+	io.ram.write.valid := wen_ram
+
+	// select output signals
+	write.ready := Mux(wen_clint, io.clint.write.ready, io.ram.write.ready)
+	write.bits.excp := write.bits.isMisalign
 }

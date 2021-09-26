@@ -18,12 +18,14 @@ class DecodePortIn extends StagePortIn {}
 class DecodePort extends StagePort {
 	override lazy val in = Input(new DecodePortIn)
 	override lazy val out = Output(new IssuePortIn)
+
+	val lsu_write = Output(Bool())
 }
 
 class Decode extends Stage {
 	override lazy val io = IO(new DecodePort)
 
-	// RISC-V use addi zero, zero, 0 as its `nop` instruction
+	// RISC-V use `addi zero, zero`, 0 as its `nop` instruction
 
 	withReset(rst) {
 		// different from other stages, module ImmGen and InstDecode 
@@ -75,5 +77,13 @@ class Decode extends Stage {
 				Mux(decoder.io.out.ebreak, MCause.BREAKPOINT, 
 				Mux(decoder.io.out.ecall, MCause.ENV_CALL_M, MCause.ILL_INS)))
 		io.out.mret 	:= decoder.io.out.mret
+
+		io.lsu_write := decoder.io.out.store
 	}
+}
+
+
+import chisel3.stage.ChiselStage
+object DecodeGenVerilog extends App {
+	(new ChiselStage).emitVerilog(new Decode)
 }

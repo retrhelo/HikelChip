@@ -45,6 +45,8 @@ class IssuePort extends StagePort {
 
 	// connect BrCond
 	val brcond = Output(new BrCondPort)
+
+	val lsu_write = Output(Bool())
 }
 
 class Issue extends Stage {
@@ -178,5 +180,7 @@ class Issue extends Stage {
 		io.out.csr_use 		:= reg_csr_use
 		io.out.lsu_use 		:= reg_lsu_use
 		io.out.mret 		:= reg_mret
+
+		io.lsu_write 		:= reg_lsu_use && io.out.uop(4)
 	}
 }

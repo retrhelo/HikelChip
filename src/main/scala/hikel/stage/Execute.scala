@@ -11,6 +11,8 @@ import chisel3.util.experimental.BoringUtils._
 import hikel._
 import hikel.Config._
 import hikel.fufu._
+import hikel.csr.machine.MCause._
+import hikel.util.ReadyValid
 
 class ExecutePortIn extends StagePortIn {
 	val rs1_data 		= UInt(MXLEN.W)
@@ -34,6 +36,10 @@ class ExecutePort extends StagePort {
 	override lazy val out = Output(new CommitPortIn)
 
 	val alu = Flipped(new AluPort)
+	val dread = ReadyValid(new LsuRead)
+
+	val hshake = Output(Bool())
+	val lsu_write = Output(Bool())
 }
 
 class Execute extends Stage {
@@ -70,15 +76,38 @@ class Execute extends Stage {
 				reg_uop(3) && !reg_csr_use, 
 				reg_uop(2, 0))
 
+		// connect to lsu
+		val lsu_op = reg_uop(2, 0)
+		io.dread.bits.addr := reg_rs1_data + reg_imm
+		io.dread.bits.op := lsu_op
+		io.dread.valid := reg_uop(3) && reg_lsu_use
+
+		io.hshake := !io.dread.valid || (io.dread.valid && io.dread.ready)
+		io.lsu_write := reg_uop(4) && reg_lsu_use
+
+		// generate exceptino signals
+		val reg_excp 	= RegInit(false.B)
+		val reg_code 	= RegInit(0.U(EXCP_LEN.W))
+		when (enable) {
+			reg_excp 	:= io.in.excp
+			reg_code 	:= io.in.code
+		}
+		io.out.excp 	:= reg_excp || io.dread.bits.excp
+		io.out.code 	:= Mux(reg_excp, reg_code, 
+				Mux(io.dread.bits.misalign, LOAD_ADDR_MISALIGN, LOAD_ACCE))
+
 		// connect to next stage
 		io.out.rd_addr 	:= reg_rd_addr
 		io.out.csr_addr := reg_csr_addr
 		io.out.rd_wen 	:= reg_rd_wen
 		io.out.csr_use 	:= reg_csr_use
 		io.out.lsu_use 	:= reg_lsu_use
+		io.out.uop 		:= reg_uop
 		io.out.mret 	:= reg_mret
 
-		io.out.data1 	:= Mux(reg_csr_use, reg_rs1_data, io.alu.res)
+		//! TODO: deal with `store` instructions
+		io.out.data1 	:= Mux(reg_csr_use, reg_rs1_data, 
+				Mux(io.dread.valid, io.dread.bits.data, io.alu.res))
 		io.out.data2 	:= Mux(reg_uop(3), reg_rs2_data, io.alu.res)
 
 		// bypass for regfile redirection
