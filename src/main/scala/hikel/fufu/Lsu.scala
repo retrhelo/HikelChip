@@ -74,10 +74,10 @@ class LsuPort extends Bundle {
 	// generate misalign exception signal
 	def isMisalign: Bool = {
 		MuxLookup(op(1, 0), false.B, Seq(
-			"b00".U -> true.B, 
-			"b01".U -> (0.U === addr(0)), 
-			"b10".U -> (0.U === addr(1, 0)), 
-			"b11".U -> (0.U === addr(2, 0)), 
+			"b00".U -> false.B, 
+			"b01".U -> (0.U =/= addr(0)), 
+			"b10".U -> (0.U =/= addr(1, 0)), 
+			"b11".U -> (0.U =/= addr(2, 0)), 
 		))
 	}
 }
@@ -117,6 +117,10 @@ private class LsuReadArbiter extends Module {
 
 	io.dread.bits <> io.read.bits
 	io.iread.bits <> io.read.bits
+
+	// `excp` is special, it's never asserted when the port is not selected
+	io.dread.bits.excp := io.read.bits.excp && io.dread.valid
+	io.iread.bits.excp := io.read.bits.excp && io.iread.valid
 }
 
 object Lsu {
@@ -201,5 +205,5 @@ class Lsu extends Module {
 
 	// select output signals
 	write.ready := Mux(wen_clint, io.clint.write.ready, io.ram.write.ready)
-	write.bits.excp := write.bits.isMisalign
+	write.bits.excp := write.bits.isMisalign && write.valid
 }

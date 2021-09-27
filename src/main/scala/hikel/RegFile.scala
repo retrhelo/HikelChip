@@ -3,7 +3,7 @@ package hikel
 import chisel3._
 import chisel3.util._
 
-import hikel.Config._
+import Config._
 
 import difftest._
 

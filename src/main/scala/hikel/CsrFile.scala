@@ -9,8 +9,8 @@ import chisel3.util.experimental.BoringUtils._
 // difftest
 import difftest._
 
-import hikel.Config._
-import hikel.csr.machine._
+import Config._
+import csr.machine._
 
 class CsrFileRead extends Bundle {
 	val addr 	= Input(UInt(CsrFile.ADDR.W))

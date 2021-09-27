@@ -6,8 +6,8 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
-import hikel.Config._
-import hikel.csr.machine._
+import Config._
+import csr.machine._
 
 class TrapExcp extends Bundle {
 	val do_excp 	= Bool()

@@ -1,14 +1,18 @@
-// The top-level module of Hikel chip 
+// Hikelchip Core. 
+// This is the top level of a single hikelchip core, including basic 
+// functional units like CSR and ALU. LSU is NOT INCLUDED here because 
+// LSU may involve **MULTIPLE** cores and should be shared by them. 
 
 package hikel
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
-import hikel.Config._
-import hikel.stage._
-import hikel.fufu._
-import hikel.util.ReadyValid
+import Config._
+import stage._
+import fufu._
+import util.ReadyValid
 
 class HikelCore(val hartid: Int) extends Module {
 	val io = IO(new Bundle {
@@ -70,13 +74,13 @@ class HikelCore(val hartid: Int) extends Module {
 	/* stage control signals */
 
 	// fetch
-	fetch.io.enable := io.iread.ready && fetch.io.hshake && execute.io.hshake && commit.io.hshake
+	fetch.io.enable := fetch.io.hshake && execute.io.hshake && commit.io.hshake
 	fetch.io.clear := false.B
 	fetch.io.trap := trapctrl.io.do_trap
 
 	// decode
 	decode.io.enable := execute.io.hshake && commit.io.hshake
-	decode.io.clear := brcond.io.change_pc || commit.io.mret || !io.iread.ready || !fetch.io.hshake
+	decode.io.clear := brcond.io.change_pc || commit.io.mret || !fetch.io.hshake
 	decode.io.trap := trapctrl.io.do_trap
 
 	// issue
@@ -98,6 +102,12 @@ class HikelCore(val hartid: Int) extends Module {
 	private val csrfile = Module(new CsrFile(hartid))
 	issue.io.csrfile_read <> csrfile.io.read
 	commit.io.csrfile_write <> csrfile.io.write
+
+	// connect to mip
+	addSource(io.int_timer, "do_timer")
+	addSource(io.int_soft, "do_soft")
+	addSource(io.int_extern, "do_external")
+
 	// trap control
 	lazy val trapctrl = Module(new TrapCtrl)
 	trapctrl.io.excp.do_excp 	:= commit.io.out.excp

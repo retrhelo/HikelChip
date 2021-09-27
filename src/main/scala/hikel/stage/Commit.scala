@@ -11,7 +11,10 @@ import chisel3.util.experimental.BoringUtils._
 
 import freechips.rocketchip.rocket.Instructions.MRET
 
-import hikel._
+import hikel.{
+	RegFile, RegFileWrite, 
+	CsrFile, CsrFileWrite, 
+}
 import hikel.Config._
 import hikel.util.ReadyValid
 import hikel.fufu._
@@ -26,7 +29,7 @@ class CommitPortIn extends StagePortIn {
 	val rd_wen 		= Bool()
 	val csr_use 	= Bool()
 	val lsu_use 	= Bool()
-	val uop 		= UInt(5.W)
+	val lsu_op 		= UInt(3.W)
 
 	val mret 		= Bool()
 
@@ -53,7 +56,7 @@ class Commit extends Stage {
 		val reg_rd_wen 		= RegInit(false.B)
 		val reg_csr_use 	= RegInit(false.B)
 		val reg_lsu_use 	= RegInit(false.B)
-		val reg_uop 		= RegInit(0.U(5.W))
+		val reg_lsu_op 		= RegInit(0.U(3.W))
 		val reg_mret 		= RegInit(false.B)
 		val reg_data1 		= RegInit(0.U(MXLEN.W))
 		val reg_data2 		= RegInit(0.U(MXLEN.W))
@@ -63,17 +66,17 @@ class Commit extends Stage {
 			reg_rd_wen 		:= io.in.rd_wen
 			reg_csr_use 	:= io.in.csr_use
 			reg_lsu_use 	:= io.in.lsu_use
-			reg_uop 		:= io.in.uop
+			reg_lsu_op 		:= io.in.lsu_op
 			reg_mret 		:= io.in.mret
 			reg_data1 		:= io.in.data1
 			reg_data2 		:= io.in.data2
 		}
 
 		io.mret := reg_mret
-		addSource(io.mret, "do_mret")
+		addSource(io.mret, "do_mret", disableDedup = true)
 
 		val mepc_pc = io.out.pc
-		addSource(mepc_pc, "mepc_pc")
+		addSource(mepc_pc, "mepc_pc", disableDedup = true)
 
 		// connect to regfile
 		io.regfile_write.rd_wen 	:= reg_rd_wen && !io.trap
@@ -94,9 +97,9 @@ class Commit extends Stage {
 		addSource(io.csrfile_write.data, "commit_csr_data")
 
 		// connect to Lsu write port
-		io.dwrite.valid := reg_uop(4).asBool && reg_lsu_use
+		io.dwrite.valid := reg_lsu_use
 		io.dwrite.bits.data := reg_data1
-		io.dwrite.bits.op := reg_uop(2, 0)
+		io.dwrite.bits.op := reg_lsu_op
 		io.dwrite.bits.addr := reg_data1(31, 0)
 
 		io.hshake := !io.dwrite.valid || (io.dwrite.valid && io.dwrite.ready)

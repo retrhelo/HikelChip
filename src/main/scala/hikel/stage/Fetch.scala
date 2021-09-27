@@ -61,11 +61,12 @@ class Fetch extends Stage {
 		io.iread.bits.addr := reg_pc
 		io.iread.bits.op := "b10".U
 
-		io.hshake := io.iread.valid && io.iread.ready
+		io.hshake := !io.iread.valid || (io.iread.valid && io.iread.ready)
 
 		// connect to Decode
 		val data = io.iread.bits.data
-		io.out.inst := Mux(reg_pc(2), data(63, 32), data(31, 0))
+		io.out.inst := data(31, 0)
+		io.out.pc := reg_pc
 
 		// exception generation
 		io.out.excp := io.iread.bits.excp

@@ -9,7 +9,10 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
-import hikel._
+import hikel.{
+	RegFile, RegFileRead, 
+	CsrFile, CsrFileRead, 
+}
 import hikel.Config._
 import hikel.fufu._
 

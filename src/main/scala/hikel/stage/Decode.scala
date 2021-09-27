@@ -8,7 +8,6 @@ package hikel.stage
 import chisel3._
 import chisel3.util._
 
-import hikel._
 import hikel.Config._
 import hikel.decode._
 import hikel.csr.machine._
@@ -80,10 +79,4 @@ class Decode extends Stage {
 
 		io.lsu_write := decoder.io.out.store
 	}
-}
-
-
-import chisel3.stage.ChiselStage
-object DecodeGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Decode)
 }

@@ -8,7 +8,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils._
 
-import hikel._
+import hikel.{RegFile, CsrFile}
 import hikel.Config._
 import hikel.fufu._
 import hikel.csr.machine.MCause._
@@ -78,9 +78,13 @@ class Execute extends Stage {
 
 		// connect to lsu
 		val lsu_op = reg_uop(2, 0)
-		io.dread.bits.addr := reg_rs1_data + reg_imm
+		val lsu_addr = Wire(UInt(Lsu.ADDR.W))
+		val lsu_load = reg_uop(3).asBool && reg_lsu_use
+		val lsu_store = reg_uop(4).asBool && reg_lsu_use
+		lsu_addr := reg_rs1_data + reg_imm
+		io.dread.bits.addr := lsu_addr
 		io.dread.bits.op := lsu_op
-		io.dread.valid := reg_uop(3) && reg_lsu_use
+		io.dread.valid := lsu_load
 
 		io.hshake := !io.dread.valid || (io.dread.valid && io.dread.ready)
 		io.lsu_write := reg_uop(4) && reg_lsu_use
@@ -101,13 +105,17 @@ class Execute extends Stage {
 		io.out.csr_addr := reg_csr_addr
 		io.out.rd_wen 	:= reg_rd_wen
 		io.out.csr_use 	:= reg_csr_use
-		io.out.lsu_use 	:= reg_lsu_use
-		io.out.uop 		:= reg_uop
+		io.out.lsu_use 	:= reg_lsu_use && reg_uop(4)
+		io.out.lsu_op 	:= reg_uop(2, 0)
 		io.out.mret 	:= reg_mret
 
-		//! TODO: deal with `store` instructions
+		// data1 is the data to regfile or LSU store address
 		io.out.data1 	:= Mux(reg_csr_use, reg_rs1_data, 
-				Mux(io.dread.valid, io.dread.bits.data, io.alu.res))
+				Mux(io.dread.valid, io.dread.bits.data, 
+				Mux(lsu_load, io.dread.bits.data, 
+				Mux(lsu_store, lsu_addr, 
+				io.alu.res))))
+		// data2 is the data written to CSR or LSU
 		io.out.data2 	:= Mux(reg_uop(3), reg_rs2_data, io.alu.res)
 
 		// bypass for regfile redirection

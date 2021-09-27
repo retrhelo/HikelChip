@@ -213,10 +213,22 @@ object MI {
 }
 
 class Mip extends CsrReg(CSRs.mip) {
-	val mip = WireInit(0.U(MXLEN.W))
+	// val mip = WireInit(0.U(MXLEN.W))
+	val mip = WireInit(VecInit(Seq.fill(MXLEN)(false.B)))
 
-	io.rdata := mip
-	addSource(mip, "mip", disableDedup=true)
+	val do_timer 		= WireInit(false.B)
+	val do_soft 		= WireInit(false.B)
+	val do_external 	= WireInit(false.B)
+	addSink(do_timer, "do_timer")
+	addSink(do_soft, "do_soft")
+	addSink(do_external, "do_external")
+
+	mip(MI.MTI) 	:= do_timer
+	mip(MI.MSI) 	:= do_soft
+	mip(MI.MEI) 	:= do_external
+
+	io.rdata := mip.asUInt
+	addSource(io.rdata, "mip", disableDedup=true)
 }
 
 class Mie extends CsrReg(CSRs.mie) {
