@@ -19,8 +19,13 @@ CSR_SRC = \
 	$(CSR_DIR)/exception.S \
 	$(CSR_DIR)/ecall.S \
 	$(CSR_DIR)/exception2.S 
-
 SRC += $(CSR_SRC)
+
+LSU_DIR = bin/non-output/riscv-tests/loadstore
+LSU_SRC = \
+	$(LSU_DIR)/load-after-store.S
+SRC += $(LSU_SRC)
+
 OBJ = $(addsuffix .o, $(basename $(SRC)))
 BIN = $(addsuffix .bin, $(basename $(SRC)))
 

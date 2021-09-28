@@ -89,15 +89,24 @@ class LsuWrite extends LsuPort {
 
 	def genStrb: UInt = {	// generate 8bit mask
 		val base = addr(2, 0)
-		val wstrb = Wire(Vec(MXLEN / 8, Bool()))
+		// val wstrb = Wire(Vec(MXLEN / 8, Bool()))
 
 		//! TODO: the algorithm for wstrb(i) hasn't been figured out yet
 		//! 	I wonder if there's an easy way for doing this.
-		for (i <- 0 until MXLEN / 8) {
-			wstrb(i) := false.B
+		//! 	CODES BELOW HAVEN'T BEEN TESTED YET
+		val width = MXLEN / 8
+		val wstrb = WireInit(0.U(width.W))
+		wstrb := {
+			val tmp = MuxLookup(op(1, 0), 0.U, Array(
+				"b00".U -> "b00000001".U(width.W), 
+				"b01".U -> "b00000011".U(width.W), 
+				"b10".U -> "b00001111".U(width.W), 
+				"b11".U -> "b11111111".U(width.W), 
+			))
+			tmp << base
 		}
 
-		wstrb.asUInt
+		wstrb
 	}
 }
 
@@ -115,8 +124,16 @@ private class LsuReadArbiter extends Module {
 	io.dread.ready := io.read.ready
 	io.iread.ready := !sel && io.read.ready
 
-	io.dread.bits <> io.read.bits
-	io.iread.bits <> io.read.bits
+	io.read.bits.addr := Mux(sel, io.dread.bits.addr, 
+			io.iread.bits.addr)
+	io.read.bits.op := Mux(sel, io.dread.bits.op, 
+			io.iread.bits.op)
+
+	io.dread.bits.data 	:= io.read.bits.data
+	io.iread.bits.data 	:= io.read.bits.data
+
+	io.dread.bits.misalign := io.read.bits.misalign
+	io.iread.bits.misalign := io.read.bits.misalign
 
 	// `excp` is special, it's never asserted when the port is not selected
 	io.dread.bits.excp := io.read.bits.excp && io.dread.valid

@@ -67,6 +67,7 @@ class Fetch extends Stage {
 		val data = io.iread.bits.data
 		io.out.inst := data(31, 0)
 		io.out.pc := reg_pc
+		io.out.valid := true.B
 
 		// exception generation
 		io.out.excp := io.iread.bits.excp
