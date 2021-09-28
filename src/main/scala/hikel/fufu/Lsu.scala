@@ -89,11 +89,7 @@ class LsuWrite extends LsuPort {
 
 	def genStrb: UInt = {	// generate 8bit mask
 		val base = addr(2, 0)
-		// val wstrb = Wire(Vec(MXLEN / 8, Bool()))
 
-		//! TODO: the algorithm for wstrb(i) hasn't been figured out yet
-		//! 	I wonder if there's an easy way for doing this.
-		//! 	CODES BELOW HAVEN'T BEEN TESTED YET
 		val width = MXLEN / 8
 		val wstrb = WireInit(0.U(width.W))
 		wstrb := {
@@ -107,6 +103,21 @@ class LsuWrite extends LsuPort {
 		}
 
 		wstrb
+	}
+
+	def genData: UInt = {
+		val base = addr(2, 0)
+
+		MuxLookup(base, 0.U, Array(
+			"b000".U -> (data), 
+			"b001".U -> (data << 8), 
+			"b010".U -> (data << 16), 
+			"b011".U -> (data << 24), 
+			"b100".U -> (data << 32), 
+			"b101".U -> (data << 40), 
+			"b110".U -> (data << 48), 
+			"b111".U -> (data << 56), 
+		))
 	}
 }
 
@@ -216,7 +227,7 @@ class Lsu extends Module {
 
 	// connect to RAM
 	io.ram.write.bits.addr := write.bits.addr
-	io.ram.write.bits.wdata := write.bits.data
+	io.ram.write.bits.wdata := write.bits.genData
 	io.ram.write.bits.wstrb := write.bits.genStrb
 	io.ram.write.valid := wen_ram
 

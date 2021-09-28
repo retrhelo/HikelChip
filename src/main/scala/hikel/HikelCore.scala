@@ -74,13 +74,13 @@ class HikelCore(val hartid: Int) extends Module {
 	/* stage control signals */
 
 	// fetch
-	fetch.io.enable := fetch.io.hshake && execute.io.hshake && commit.io.hshake
+	fetch.io.enable := fetch.io.hshake && execute.io.hshake && commit.io.hshake && !lsu_write
 	fetch.io.clear := false.B
 	fetch.io.trap := trapctrl.io.do_trap
 
 	// decode
 	decode.io.enable := execute.io.hshake && commit.io.hshake
-	decode.io.clear := brcond.io.change_pc || commit.io.mret || !fetch.io.hshake
+	decode.io.clear := brcond.io.change_pc || commit.io.mret || !fetch.io.hshake || lsu_write
 	decode.io.trap := trapctrl.io.do_trap
 
 	// issue
@@ -102,6 +102,13 @@ class HikelCore(val hartid: Int) extends Module {
 	private val csrfile = Module(new CsrFile(hartid))
 	issue.io.csrfile_read <> csrfile.io.read
 	commit.io.csrfile_write <> csrfile.io.write
+
+	// LSU
+	private lazy val lsu_write = WireInit(false.B)
+	lsu_write := decode.io.lsu_write || 
+			issue.io.lsu_write || 
+			execute.io.lsu_write || 
+			commit.io.lsu_write
 
 	// connect to mip
 	addSource(io.int_timer, "do_timer")

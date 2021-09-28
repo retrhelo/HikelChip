@@ -105,7 +105,7 @@ class Execute extends Stage {
 		io.out.csr_addr := reg_csr_addr
 		io.out.rd_wen 	:= reg_rd_wen
 		io.out.csr_use 	:= reg_csr_use
-		io.out.lsu_use 	:= reg_lsu_use && reg_uop(4)
+		io.out.lsu_use 	:= lsu_store
 		io.out.lsu_op 	:= reg_uop(2, 0)
 		io.out.mret 	:= reg_mret
 
@@ -116,7 +116,9 @@ class Execute extends Stage {
 				Mux(lsu_store, lsu_addr, 
 				io.alu.res))))
 		// data2 is the data written to CSR or LSU
-		io.out.data2 	:= Mux(reg_uop(3), reg_rs2_data, io.alu.res)
+		io.out.data2 	:= Mux(lsu_store, reg_rs2_data, 
+				Mux(reg_csr_use && reg_uop(3), reg_rs2_data, 
+				io.alu.res))
 
 		// bypass for regfile redirection
 		addSource(io.out.rd_wen, "exec_rd_wen")

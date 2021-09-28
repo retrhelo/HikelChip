@@ -45,6 +45,7 @@ class CommitPort extends StagePort {
 
 	val mret = Output(Bool())
 	val hshake = Output(Bool()) 		// the handshake is successful
+	val lsu_write = Output(Bool()) 		// current instruction writes to LSU
 }
 
 class Commit extends Stage {
@@ -98,11 +99,12 @@ class Commit extends Stage {
 
 		// connect to Lsu write port
 		io.dwrite.valid := reg_lsu_use
-		io.dwrite.bits.data := reg_data1
+		io.dwrite.bits.data := reg_data2
 		io.dwrite.bits.op := reg_lsu_op
 		io.dwrite.bits.addr := reg_data1(31, 0)
 
 		io.hshake := !io.dwrite.valid || (io.dwrite.valid && io.dwrite.ready)
+		io.lsu_write := io.dwrite.valid
 
 		// generate exception signals
 		val reg_excp = RegInit(false.B)
