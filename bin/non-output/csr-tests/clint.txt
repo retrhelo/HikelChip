@@ -1,0 +1,62 @@
+
+bin/non-output/csr-tests/clint.out:     file format elf64-littleriscv
+bin/non-output/csr-tests/clint.out
+
+
+Disassembly of section .text:
+
+0000000080000000 <_entry>:
+    80000000:	00000517          	auipc	a0,0x0
+    80000004:	03050513          	addi	a0,a0,48 # 80000030 <trap_vec>
+    80000008:	30551073          	csrw	mtvec,a0
+    8000000c:	0200c537          	lui	a0,0x200c
+    80000010:	ff85051b          	addiw	a0,a0,-8
+    80000014:	00053583          	ld	a1,0(a0) # 200c000 <_entry-0x7dff4000>
+    80000018:	3e858593          	addi	a1,a1,1000
+    8000001c:	02004537          	lui	a0,0x2004
+    80000020:	00b53023          	sd	a1,0(a0) # 2004000 <_entry-0x7dffc000>
+    80000024:	30045073          	csrwi	mstatus,8
+
+0000000080000028 <loop>:
+    80000028:	0000006f          	j	80000028 <loop>
+    8000002c:	00000013          	nop
+
+0000000080000030 <trap_vec>:
+    80000030:	fc010113          	addi	sp,sp,-64
+    80000034:	00a13023          	sd	a0,0(sp)
+    80000038:	00b13423          	sd	a1,8(sp)
+    8000003c:	00c13823          	sd	a2,16(sp)
+    80000040:	00d13c23          	sd	a3,24(sp)
+    80000044:	02e13023          	sd	a4,32(sp)
+    80000048:	02f13423          	sd	a5,40(sp)
+    8000004c:	03013823          	sd	a6,48(sp)
+    80000050:	03113c23          	sd	a7,56(sp)
+    80000054:	02c000ef          	jal	ra,80000080 <trap_handler>
+    80000058:	00013503          	ld	a0,0(sp)
+    8000005c:	00813583          	ld	a1,8(sp)
+    80000060:	01013603          	ld	a2,16(sp)
+    80000064:	01813683          	ld	a3,24(sp)
+    80000068:	02013703          	ld	a4,32(sp)
+    8000006c:	02813783          	ld	a5,40(sp)
+    80000070:	03013803          	ld	a6,48(sp)
+    80000074:	03813883          	ld	a7,56(sp)
+    80000078:	04010113          	addi	sp,sp,64
+    8000007c:	30200073          	mret
+
+0000000080000080 <trap_handler>:
+    80000080:	0000006b          	0x6b
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	1941                	addi	s2,s2,-16
+   2:	0000                	unimp
+   4:	7200                	ld	s0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <BASE_ADDRESS-0x7fffffec>
+   c:	0000000f          	fence	unknown,unknown
+  10:	7205                	lui	tp,0xfffe1
+  12:	3676                	fld	fa2,376(sp)
+  14:	6934                	ld	a3,80(a0)
+  16:	7032                	0x7032
+  18:	0030                	addi	a2,sp,8

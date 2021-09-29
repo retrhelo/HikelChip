@@ -11,14 +11,15 @@ LD = $(PREFIX)ld
 OBJCOPY = $(PREFIX)objcopy
 OBJDUMP = $(PREFIX)objdump
 
-ASFLAGS = -march=rv64i -mabi=lp64 -c
+ASFLAGS = -march=rv64i -mabi=lp64
 
 CSR_DIR = bin/non-output/csr-tests
 CSR_SRC = \
 	$(CSR_DIR)/csr.S \
 	$(CSR_DIR)/exception.S \
 	$(CSR_DIR)/ecall.S \
-	$(CSR_DIR)/exception2.S 
+	$(CSR_DIR)/exception2.S \
+	$(CSR_DIR)/clint.S
 SRC += $(CSR_SRC)
 
 OBJ = $(addsuffix .o, $(basename $(SRC)))
