@@ -40,20 +40,20 @@ class Fetch extends Stage {
 		val next_pc = reg_pc + 4.U
 		val mtvec = WireInit(0.U(PC.W))
 		val mepc = WireInit(0.U(PC.W))
-		val do_mret = WireInit(false.B)
 		addSink(mtvec, "mtvec")
 		addSink(mepc, "mepc")
-		addSink(do_mret, "do_mret")
 
 		when (io.trap) {
 			reg_pc := mtvec
 		}
-		.elsewhen (do_mret) {
+		.elsewhen (io.mret) {
 			reg_pc := mepc
 		}
+		.elsewhen (io.change_pc) {
+			reg_pc := io.new_pc
+		}
 		.elsewhen (enable) {
-			reg_pc := Mux(io.change_pc, io.new_pc, 
-					Mux(io.mret, mepc, next_pc))
+			reg_pc := next_pc
 		}
 
 		// connect to icache

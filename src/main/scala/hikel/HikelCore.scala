@@ -79,18 +79,18 @@ class HikelCore(val hartid: Int) extends Module {
 	fetch.io.trap := trapctrl.io.do_trap
 
 	// decode
-	decode.io.enable := execute.io.hshake && commit.io.hshake
-	decode.io.clear := brcond.io.change_pc || commit.io.mret || !fetch.io.hshake || lsu_write
+	decode.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
+	decode.io.clear := brcond.io.change_pc || commit.io.mret || lsu_write
 	decode.io.trap := trapctrl.io.do_trap
 
 	// issue
-	issue.io.enable := execute.io.hshake && commit.io.hshake
+	issue.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
 	issue.io.clear := brcond.io.change_pc || commit.io.mret
 	issue.io.trap := trapctrl.io.do_trap
 
 	// execute
 	execute.io.enable := execute.io.hshake && commit.io.hshake
-	execute.io.clear := commit.io.mret
+	execute.io.clear := commit.io.mret || !fetch.io.hshake
 	execute.io.trap := trapctrl.io.do_trap
 
 	// commit

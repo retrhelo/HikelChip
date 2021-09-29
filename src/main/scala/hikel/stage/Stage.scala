@@ -36,7 +36,7 @@ class Stage extends Module {
 	val enable = Wire(Bool())
 	val rst = Wire(Bool())
 	enable := io.enable
-	rst := reset.asBool || io.clear || io.trap
+	rst := reset.asBool || (io.clear && io.enable) || io.trap
 
 	withReset(rst) {
 		val reg_pc 		= RegInit(0.U(PC.W))
