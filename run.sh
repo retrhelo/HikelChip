@@ -11,6 +11,10 @@ images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/load/*.bin`"
 images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/store/*.bin`"
 images="${images} `ls ${IMG_DIR}/non-output/cpu-tests/*.bin`"
 
+# start wavefile
+WAVE_BEGIN=0
+WAVE_END=2000
+
 help() {
 	echo "Please remember: 指揮官、わたしがいれば十分ですよ。"
 	echo "Usage:"
@@ -26,7 +30,7 @@ help() {
 }
 
 # Check parameters
-while getopts 'hbri:wc' OPT; do
+while getopts 'hbri:wcs:e:' OPT; do
 	case $OPT in
 		h) help;;
 		b) DO_BUILD="true";;
@@ -34,6 +38,8 @@ while getopts 'hbri:wc' OPT; do
 		i) images="$OPTARG";;
 		w) DO_WAVE="--dump-wave";;
 		c) rm -rf build;;
+		s) WAVE_BEGIN="$OPTARG";;
+		e) WAVE_END="$OPTARG";;
 		?) help;;
 	esac
 done
@@ -44,7 +50,7 @@ fi
 
 if [[ $DO_RUN = "true" ]]; then 
 	for i in ${images}; do
-		${TARGET} -i $i $DO_WAVE -b 0 -e 2000
+		${TARGET} -i $i $DO_WAVE -b ${WAVE_BEGIN} -e ${WAVE_END}
 		if [[ $? -ne 0 ]]; then 
 			echo "failed at $i"
 			exit -1
