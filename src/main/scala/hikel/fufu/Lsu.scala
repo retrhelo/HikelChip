@@ -14,21 +14,34 @@ import hikel.util.ReadyValid
 class LsuUnitRead extends Bundle {
 	val addr 	= Output(UInt(Lsu.ADDR.W))
 	val rdata 	= Input(UInt(Lsu.DATA.W))
+	val op 	= Output(UInt(3.W))
 
 	/*
-		uop: operation code, 3bit
+		op: operation code, 3bit
 		base: base address, 3bit
 	*/
-	def genReadData(uop: UInt, base: UInt) = {
-		val signed = !uop(2)
-		val width = uop(1, 0)
+	def genReadData = {
+		val signed = !op(2)
+		val width = op(1, 0)
+		val base = addr(2, 0)
 
-		val tmp = WireInit(0.U(MXLEN.W))
-		for (i <- 0 until 8) {
-			when (i.U === base) {
-				tmp := Cat(0.U((MXLEN - i * 8).W), rdata(MXLEN-1, i * 8))
-			}
-		}
+		// val tmp = WireInit(0.U(MXLEN.W))
+		// for (i <- 0 until 8) {
+		// 	when (i.U === base) {
+		// 		tmp := Cat(0.U((MXLEN - i * 8).W), rdata(MXLEN-1, i * 8))
+		// 	}
+		// }
+		val tmp = Wire(UInt(MXLEN.W))
+		tmp := MuxLookup(base, 0.U, Array(
+			"b000".U -> tmp, 
+			"b001".U -> (tmp >> 8), 
+			"b010".U -> (tmp >> 16), 
+			"b011".U -> (tmp >> 24), 
+			"b100".U -> (tmp >> 32), 
+			"b101".U -> (tmp >> 40), 
+			"b110".U -> (tmp >> 48), 
+			"b111".U -> (tmp >> 56), 
+		))
 
 		MuxLookup(width, tmp, Array(
 			"b00".U -> Cat(Fill(MXLEN - 8, tmp(7) & signed), tmp(7, 0)), 
@@ -202,16 +215,18 @@ class Lsu extends Module {
 
 	// connect to CLINT
 	io.clint.read.bits.addr := read.bits.addr
+	io.clint.read.bits.op := read.bits.op
 	io.clint.read.valid := ren_clint
 
 	// connect to RAM
 	io.ram.read.bits.addr := read.bits.addr
+	io.ram.read.bits.op := read.bits.op
 	io.ram.read.valid := ren_clint
 
 	// select output signals
 	read.ready := Mux(ren_clint, io.clint.read.ready, io.ram.read.ready)
-	read.bits.data := Mux(ren_clint, io.clint.read.bits.genReadData(read.bits.op, read.bits.addr(2, 0)), 
-			io.ram.read.bits.genReadData(read.bits.op, read.bits.addr(2, 0)))
+	read.bits.data := Mux(ren_clint, io.clint.read.bits.genReadData, 
+			io.ram.read.bits.genReadData)
 	read.bits.excp := read.bits.isMisalign
 
 	/* WRITE */
