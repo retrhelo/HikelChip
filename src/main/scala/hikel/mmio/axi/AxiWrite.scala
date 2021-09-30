@@ -26,7 +26,7 @@ class WRespPort extends Bundle {
 	val bid 		= UInt(Axi.ID.W)
 }
 
-class AxiWrite extends Module {
+class AxiWrite(val id: Int) extends Module {
 	val io = IO(new Bundle {
 		val waddr = ReadyValid(Output(new WAddrPort))
 		val wdata = ReadyValid(Output(new WDataPort))
@@ -35,9 +35,38 @@ class AxiWrite extends Module {
 		// interface to invalid
 		val lsu_write = Flipped(ReadyValid(new LsuUnitWrite))
 	})
+
+	// state machine
+	val reg_bready = RegInit(false.B);
+	{
+		when (!reg_bready && io.waddr.hshake && io.wdata.hshake) {
+			reg_bready := true.B
+		}
+		.elsewhen (io.wresp.hshake) {
+			reg_bready := false.B
+		}
+	}
+
+	// ready/valid signals
+	io.waddr.valid := io.lsu_write.valid
+	io.wdata.valid := io.lsu_write.valid
+	io.wresp.ready := reg_bready
+	io.lsu_write.ready := io.wresp.hshake
+
+	// connect to WADDR channel
+	io.waddr.bits.awaddr := io.lsu_write.bits.addr
+	io.waddr.bits.awid := id.U
+	io.waddr.bits.awlen := 1.U
+	io.waddr.bits.awsize := "b11".U
+	io.waddr.bits.awburst := Axi.BURST_FIXED
+
+	// connect to WDATA channel
+	io.wdata.bits.wdata := io.lsu_write.bits.wdata
+	io.wdata.bits.wstrb := ~io.lsu_write.bits.wstrb
+	io.wdata.bits.wlast := true.B
 }
 
 
 object AxiWriteGenVerilog extends App {
-	(new chisel3.stage.ChiselStage).emitVerilog(new AxiWrite)
+	(new chisel3.stage.ChiselStage).emitVerilog(new AxiWrite(0))
 }

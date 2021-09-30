@@ -15,6 +15,9 @@ object AxiInterface {
 	val STRB = DATA / 8
 	val ID = 4
 	val BURST = 2
+
+	val BURST_FIXED = 0.U
+	val BURST_INCR = 1.U
 }
 class AxiInterface extends Module {
 	val io = IO(new Bundle {

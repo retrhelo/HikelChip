@@ -25,12 +25,6 @@ class LsuUnitRead extends Bundle {
 		val width = op(1, 0)
 		val base = addr(2, 0)
 
-		// val tmp = WireInit(0.U(MXLEN.W))
-		// for (i <- 0 until 8) {
-		// 	when (i.U === base) {
-		// 		tmp := Cat(0.U((MXLEN - i * 8).W), rdata(MXLEN-1, i * 8))
-		// 	}
-		// }
 		val tmp = Wire(UInt(MXLEN.W))
 		tmp := MuxLookup(base, 0.U, Array(
 			"b000".U -> tmp, 

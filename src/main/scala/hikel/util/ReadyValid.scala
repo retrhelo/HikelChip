@@ -11,4 +11,6 @@ object ReadyValid {
 class ReadyValid[T <: Data](val bits: T) extends Bundle {
 	val valid = Output(Bool())
 	val ready = Input(Bool())
+
+	def hshake = valid && ready
 }
