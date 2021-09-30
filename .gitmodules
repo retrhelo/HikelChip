@@ -2,3 +2,6 @@
 	path = difftest
 	url = https://gitee.com/oscpu/difftest.git
 	branch = ysyx
+[submodule "DRAMsim3"]
+	path = DRAMsim3
+	url = https://gitee.com/oscpu/DRAMsim3.git

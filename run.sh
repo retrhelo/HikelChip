@@ -1,15 +1,17 @@
 NOOP_HOME=.
+DRAMSIM3_HOME=${PWD}/DRAMsim3
 DIFF_DIR=difftest
 TARGET=build/emu
 IMG_DIR=bin
 
 export NOOP_HOME
+export DRAMSIM3_HOME
 
 images=`ls ${IMG_DIR}/non-output/riscv-tests/*.bin`
-images="${images} `ls ${IMG_DIR}/non-output/csr-tests/*.bin`"
-images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/load/*.bin`"
-images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/store/*.bin`"
-images="${images} `ls ${IMG_DIR}/non-output/cpu-tests/*.bin`"
+# images="${images} `ls ${IMG_DIR}/non-output/csr-tests/*.bin`"
+# images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/load/*.bin`"
+# images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/store/*.bin`"
+# images="${images} `ls ${IMG_DIR}/non-output/cpu-tests/*.bin`"
 
 # start wavefile
 WAVE_BEGIN=0
@@ -45,7 +47,8 @@ while getopts 'hbri:wcs:e:' OPT; do
 done
 
 if [[ $DO_BUILD = "true" ]]; then 
-	make -C ${DIFF_DIR} NOOP_HOME=${NOOP_HOME} EMU_TRACE=1
+	# make -C ${DIFF_DIR} NOOP_HOME=${NOOP_HOME} EMU_TRACE=1
+	make -C ${DIFF_DIR} NOOP_HOME=${NOOP_HOME} DRAMSIM3_HOME=${DRAMSIM3_HOME} EMU_TRACE=1 WITH_DRAMSIM3=1
 fi
 
 if [[ $DO_RUN = "true" ]]; then 

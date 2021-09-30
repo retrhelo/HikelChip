@@ -46,27 +46,32 @@ class AxiRead(val id: Int) extends Module {
 	})
 
 	// state machine
+	val reg_arvalid = RegInit(false.B)
 	val reg_rready = RegInit(false.B);
 	{
-		when (!reg_rready && io.raddr.hshake) {
+		when (!(reg_arvalid || reg_rready) && io.lsu_read.valid) {
+			reg_arvalid := true.B
+		}
+		.elsewhen (io.raddr.hshake) {
+			reg_arvalid := false.B
 			reg_rready := true.B
 		}
-		.elsewhen (io.rdata.hshake && io.rdata.bits.rlast) {
+		.elsewhen (io.lsu_read.ready) { // transaction done
 			reg_rready := false.B
 		}
 	}
 
 	// connect ready/valid signals
-	io.raddr.valid := io.lsu_read.valid
+	io.raddr.valid := reg_arvalid
 	io.rdata.ready := reg_rready
-	io.lsu_read.ready := io.rdata.hshake
+	io.lsu_read.ready := io.rdata.hshake && io.rdata.bits.rlast
 
 	// connect to RADDR
 	io.raddr.bits.araddr := io.lsu_read.bits.addr
 	io.raddr.bits.arid := id.U
-	io.raddr.bits.arlen := 1.U 		// number of transfer in burst transation
-	io.raddr.bits.arsize := io.lsu_read.bits.op(1, 0)
-	io.raddr.bits.arburst := Axi.BURST_FIXED
+	io.raddr.bits.arlen := 0.U 		// number of transfer in burst transation
+	io.raddr.bits.arsize := "b11".U
+	io.raddr.bits.arburst := Axi.BURST_INCR
 
 	// connect RDATA
 	io.lsu_read.bits.rdata := io.rdata.bits.rdata

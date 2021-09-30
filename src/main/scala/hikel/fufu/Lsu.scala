@@ -27,14 +27,14 @@ class LsuUnitRead extends Bundle {
 
 		val tmp = Wire(UInt(MXLEN.W))
 		tmp := MuxLookup(base, 0.U, Array(
-			"b000".U -> tmp, 
-			"b001".U -> (tmp >> 8), 
-			"b010".U -> (tmp >> 16), 
-			"b011".U -> (tmp >> 24), 
-			"b100".U -> (tmp >> 32), 
-			"b101".U -> (tmp >> 40), 
-			"b110".U -> (tmp >> 48), 
-			"b111".U -> (tmp >> 56), 
+			"b000".U -> rdata, 
+			"b001".U -> (rdata >> 8), 
+			"b010".U -> (rdata >> 16), 
+			"b011".U -> (rdata >> 24), 
+			"b100".U -> (rdata >> 32), 
+			"b101".U -> (rdata >> 40), 
+			"b110".U -> (rdata >> 48), 
+			"b111".U -> (rdata >> 56), 
 		))
 
 		MuxLookup(width, tmp, Array(
@@ -180,7 +180,8 @@ class Lsu extends Module {
 
 		// connect to CLINT
 		val clint = Flipped(new ClintPort(HARTNUM))
-		val ram = Flipped(new SimRamPort)
+		// connect to AXI bus
+		val axi = Flipped(new LsuUnitPort)
 	})
 
 	val read = Wire(ReadyValid(new LsuRead));
@@ -213,14 +214,14 @@ class Lsu extends Module {
 	io.clint.read.valid := ren_clint
 
 	// connect to RAM
-	io.ram.read.bits.addr := read.bits.addr
-	io.ram.read.bits.op := read.bits.op
-	io.ram.read.valid := ren_clint
+	io.axi.read.bits.addr := read.bits.addr
+	io.axi.read.bits.op := read.bits.op
+	io.axi.read.valid := ren_ram
 
 	// select output signals
-	read.ready := Mux(ren_clint, io.clint.read.ready, io.ram.read.ready)
+	read.ready := Mux(ren_clint, io.clint.read.ready, io.axi.read.ready)
 	read.bits.data := Mux(ren_clint, io.clint.read.bits.genReadData, 
-			io.ram.read.bits.genReadData)
+			io.axi.read.bits.genReadData)
 	read.bits.excp := read.bits.isMisalign
 
 	/* WRITE */
@@ -235,12 +236,12 @@ class Lsu extends Module {
 	io.clint.write.valid := wen_clint
 
 	// connect to RAM
-	io.ram.write.bits.addr := write.bits.addr
-	io.ram.write.bits.wdata := write.bits.genData
-	io.ram.write.bits.wstrb := write.bits.genStrb
-	io.ram.write.valid := wen_ram
+	io.axi.write.bits.addr := write.bits.addr
+	io.axi.write.bits.wdata := write.bits.genData
+	io.axi.write.bits.wstrb := write.bits.genStrb
+	io.axi.write.valid := wen_ram
 
 	// select output signals
-	write.ready := Mux(wen_clint, io.clint.write.ready, io.ram.write.ready)
+	write.ready := Mux(wen_clint, io.clint.write.ready, io.axi.write.ready)
 	write.bits.excp := write.bits.isMisalign && write.valid
 }
