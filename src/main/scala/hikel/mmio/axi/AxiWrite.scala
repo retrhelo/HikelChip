@@ -31,6 +31,9 @@ class AxiWrite extends Module {
 		val waddr = ReadyValid(Output(new WAddrPort))
 		val wdata = ReadyValid(Output(new WDataPort))
 		val wresp = Flipped(ReadyValid(Output(new WRespPort)))
+
+		// interface to invalid
+		val lsu_write = Flipped(ReadyValid(new LsuUnitWrite))
 	})
 }
 
