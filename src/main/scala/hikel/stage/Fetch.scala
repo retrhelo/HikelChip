@@ -63,9 +63,15 @@ class Fetch extends Stage {
 
 		io.hshake := !io.iread.valid || (io.iread.valid && io.iread.ready)
 
+		val reg_inst = RegInit(0.U(32.W))
+		when (io.hshake) {
+			reg_inst := io.iread.bits.data(31, 0)
+		}
+
 		// connect to Decode
 		val data = io.iread.bits.data
-		io.out.inst := data(31, 0)
+		// io.out.inst := data(31, 0)
+		io.out.inst := Mux(io.hshake, io.iread.bits.data(31, 0), reg_inst)
 		io.out.pc := reg_pc
 		io.out.valid := true.B
 

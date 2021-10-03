@@ -46,17 +46,20 @@ class AxiRead(val id: Int) extends Module {
 	})
 
 	// state machine
+	val reg_araddr = RegInit(0.U(Axi.ADDR.W))
 	val reg_arvalid = RegInit(false.B)
 	val reg_rready = RegInit(false.B);
 	{
 		when (!(reg_arvalid || reg_rready) && io.lsu_read.valid) {
+			// start a new transaction
+			reg_araddr := io.lsu_read.bits.addr
 			reg_arvalid := true.B
 		}
 		.elsewhen (io.raddr.hshake) {
 			reg_arvalid := false.B
 			reg_rready := true.B
 		}
-		.elsewhen (io.lsu_read.ready) { // transaction done
+		.elsewhen (io.rdata.hshake && io.rdata.bits.rlast) { // transaction done
 			reg_rready := false.B
 		}
 	}
@@ -64,10 +67,11 @@ class AxiRead(val id: Int) extends Module {
 	// connect ready/valid signals
 	io.raddr.valid := reg_arvalid
 	io.rdata.ready := reg_rready
-	io.lsu_read.ready := io.rdata.hshake && io.rdata.bits.rlast
+	io.lsu_read.ready := io.rdata.hshake && io.rdata.bits.rlast && 
+			reg_araddr === io.lsu_read.bits.addr
 
 	// connect to RADDR
-	io.raddr.bits.araddr := io.lsu_read.bits.addr
+	io.raddr.bits.araddr := reg_araddr
 	io.raddr.bits.arid := id.U
 	io.raddr.bits.arlen := 0.U 		// number of transfer in burst transation
 	io.raddr.bits.arsize := "b11".U

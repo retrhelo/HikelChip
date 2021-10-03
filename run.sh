@@ -8,10 +8,10 @@ export NOOP_HOME
 export DRAMSIM3_HOME
 
 images=`ls ${IMG_DIR}/non-output/riscv-tests/*.bin`
-# images="${images} `ls ${IMG_DIR}/non-output/csr-tests/*.bin`"
+images="${images} `ls ${IMG_DIR}/non-output/csr-tests/*.bin`"
 images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/load/*.bin`"
 images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/store/*.bin`"
-# images="${images} `ls ${IMG_DIR}/non-output/cpu-tests/*.bin`"
+images="${images} `ls ${IMG_DIR}/non-output/cpu-tests/*.bin`"
 
 # start wavefile
 WAVE_BEGIN=0

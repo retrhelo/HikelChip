@@ -49,7 +49,7 @@ class AxiWrite(val id: Int) extends Module {
 			reg_aw_w_valid := false.B
 			reg_bready := true.B
 		}
-		.elsewhen (io.lsu_write.ready) {
+		.elsewhen (io.wresp.hshake) { // transaction done
 			reg_bready := false.B
 		}
 	}

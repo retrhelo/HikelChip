@@ -49,7 +49,7 @@ class HikelCore(val hartid: Int) extends Module {
 	// connect to icache
 	fetch.io.iread <> io.iread
 	// jump/branch signals
-	fetch.io.change_pc 		:= brcond.io.change_pc
+	fetch.io.change_pc 		:= brcond.io.change_pc && issue.io.enable
 	fetch.io.new_pc 		:= brcond.io.new_pc
 	// mret
 	fetch.io.mret 			:= commit.io.mret
@@ -76,27 +76,35 @@ class HikelCore(val hartid: Int) extends Module {
 	// fetch
 	fetch.io.enable := fetch.io.hshake && execute.io.hshake && commit.io.hshake && !lsu_write
 	fetch.io.clear := false.B
-	fetch.io.trap := trapctrl.io.do_trap
+	fetch.io.trap := trapctrl.io.do_trap && commit.io.hshake
 
 	// decode
 	decode.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
-	decode.io.clear := brcond.io.change_pc || commit.io.mret || lsu_write
-	decode.io.trap := trapctrl.io.do_trap
+	// decode.io.clear := brcond.io.change_pc || commit.io.mret || lsu_write
+	// decode.io.trap := trapctrl.io.do_trap && commit.io.hshake
+	decode.io.clear := brcond.io.change_pc || lsu_write
+	decode.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
 
 	// issue
 	issue.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
-	issue.io.clear := brcond.io.change_pc || commit.io.mret
-	issue.io.trap := trapctrl.io.do_trap
+	// issue.io.clear := brcond.io.change_pc || commit.io.mret
+	// issue.io.trap := trapctrl.io.do_trap && commit.io.hshake
+	issue.io.clear := brcond.io.change_pc
+	issue.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
 
 	// execute
 	execute.io.enable := execute.io.hshake && commit.io.hshake
-	execute.io.clear := commit.io.mret || !fetch.io.hshake
-	execute.io.trap := trapctrl.io.do_trap
+	// execute.io.clear := commit.io.mret || !fetch.io.hshake
+	// execute.io.trap := trapctrl.io.do_trap && commit.io.hshake
+	execute.io.clear := !fetch.io.hshake
+	execute.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
 
 	// commit
 	commit.io.enable := commit.io.hshake
-	commit.io.clear := commit.io.mret || !execute.io.hshake
-	commit.io.trap := trapctrl.io.do_trap
+	// commit.io.clear := commit.io.mret || !execute.io.hshake
+	// commit.io.trap := trapctrl.io.do_trap && commit.io.hshake
+	commit.io.clear := !execute.io.hshake
+	commit.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
 
 	// CSR
 	private val csrfile = Module(new CsrFile(hartid))
