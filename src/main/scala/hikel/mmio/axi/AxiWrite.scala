@@ -36,33 +36,40 @@ class AxiWrite(val id: Int) extends Module {
 		val lsu_write = Flipped(ReadyValid(new LsuUnitWrite))
 	})
 
-	// state machine
+	val reg_aw_w_valid = RegInit(false.B) 	// valid signal for both WADDR and WDATA
 	val reg_bready = RegInit(false.B);
 	{
-		when (!reg_bready && io.waddr.hshake && io.wdata.hshake) {
+		when (!(reg_aw_w_valid || reg_bready) && 
+				io.lsu_write.valid) 
+		{
+			reg_aw_w_valid := true.B
+			reg_bready := false.B
+		}
+		.elsewhen (io.waddr.hshake && io.wdata.hshake) {
+			reg_aw_w_valid := false.B
 			reg_bready := true.B
 		}
-		.elsewhen (io.wresp.hshake) {
+		.elsewhen (io.lsu_write.ready) {
 			reg_bready := false.B
 		}
 	}
 
 	// ready/valid signals
-	io.waddr.valid := io.lsu_write.valid
-	io.wdata.valid := io.lsu_write.valid
+	io.waddr.valid := reg_aw_w_valid
+	io.wdata.valid := reg_aw_w_valid
 	io.wresp.ready := reg_bready
 	io.lsu_write.ready := io.wresp.hshake
 
 	// connect to WADDR channel
 	io.waddr.bits.awaddr := io.lsu_write.bits.addr
 	io.waddr.bits.awid := id.U
-	io.waddr.bits.awlen := 1.U
+	io.waddr.bits.awlen := 0.U
 	io.waddr.bits.awsize := "b11".U
-	io.waddr.bits.awburst := Axi.BURST_FIXED
+	io.waddr.bits.awburst := Axi.BURST_INCR
 
 	// connect to WDATA channel
 	io.wdata.bits.wdata := io.lsu_write.bits.wdata
-	io.wdata.bits.wstrb := ~io.lsu_write.bits.wstrb
+	io.wdata.bits.wstrb := io.lsu_write.bits.wstrb
 	io.wdata.bits.wlast := true.B
 }
 
