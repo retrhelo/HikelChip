@@ -1,3 +1,5 @@
+# script to run when emulating with difftest
+
 NOOP_HOME=.
 DRAMSIM3_HOME=${PWD}/DRAMsim3
 DIFF_DIR=difftest
