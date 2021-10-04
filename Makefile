@@ -6,6 +6,9 @@ sim-verilog:
 	sed -i 's/io_memAXI_0_w_bits_data =/io_memAXI_0_w_bits_data[0] =/g' ./build/SimTop.v
 	sed -i 's/ io_memAXI_0_r_bits_data;/ io_memAXI_0_r_bits_data[0];/g' ./build/SimTop.v
 
+soc-verilog:
+	mill -i __.test.runMain hikel.SocTopGenVerilog
+
 # below are works for testing code compiling
 
 PREFIX = riscv64-unknown-elf-

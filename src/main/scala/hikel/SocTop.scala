@@ -56,9 +56,10 @@ class SocAxiPort extends Bundle {
 
 class SocTop extends Module {
 	// this is the desired name for ysyx project
-	override def desiredName: String = "ysyx_210727"
+	override def desiredName: String = ""
 
 	val io = IO(new Bundle {
+		val interrupt = Input(Bool()) 	// external interrupt
 		val master = new SocAxiPort
 		val slave = Flipped(new SocAxiPort)
 	})
@@ -69,7 +70,7 @@ class SocTop extends Module {
 	// connect hart0 interrupt ports
 	hart0.io.int_timer := clint.io.do_timer(0)
 	hart0.io.int_soft := clint.io.do_soft(0)
-	hart0.io.int_extern := false.B
+	hart0.io.int_extern := io.interrupt
 
 	// connect hart0 with lsu
 	hart0.io.iread <> lsu.io.iread
@@ -152,7 +153,9 @@ class SocTop extends Module {
 
 
 object SocTopGenVerilog extends App {
-	(new chisel3.stage.ChiselStage).emitVerilog(
-		new SocTop, BUILD_ARG
-	)
+	(new chisel3.stage.ChiselStage).execute(args, Seq(
+		chisel3.stage.ChiselGeneratorAnnotation(() => new SocTop), 
+		firrtl.stage.RunFirrtlTransformAnnotation(new AddModulePrefix), 
+		ModulePrefixAnnotation("ysyx_210727_"), 
+	))
 }

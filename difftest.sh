@@ -1,12 +1,16 @@
 # script to run when emulating with difftest
 
 NOOP_HOME=.
-DRAMSIM3_HOME=${PWD}/DRAMsim3
 DIFF_DIR=difftest
 TARGET=build/emu
 IMG_DIR=bin
 
+# support libraries
+NEMU_HOME=~/bin/NEMU
+DRAMSIM3_HOME=~/bin/DRAMsim3
+
 export NOOP_HOME
+export NEMU_HOME
 export DRAMSIM3_HOME
 
 images=`ls ${IMG_DIR}/non-output/riscv-tests/*.bin`
@@ -20,9 +24,9 @@ WAVE_BEGIN=0
 WAVE_END=2000
 
 help() {
-	echo "Please remember: 指揮官、わたしがいれば十分ですよ。"
+	# echo "Please remember: 指揮官、わたしがいれば十分ですよ。"
 	echo "Usage:"
-	echo "$0 [-h] [-b] [-r] [-i image] [-c]"
+	echo "$0 [-h] [-b] [-r] [-i image] [-w] [-c] [-s wave_start] [-e wave_end]"
 	echo "Description:"
 	echo "-h: Display this help message"
 	echo "-b: Build emulation program using verilator"
@@ -30,6 +34,8 @@ help() {
 	echo "-i: Specify a binary image as program to run"
 	echo "-w: Generate wavefile"
 	echo "-c: Clean up"
+	echo "-s: Specify start cycle for wavefile"
+	echo "-e: Specify end cycle for wavefile"
 	exit 0
 }
 
@@ -41,7 +47,7 @@ while getopts 'hbri:wcs:e:' OPT; do
 		r) DO_RUN="true";;
 		i) images="$OPTARG";;
 		w) DO_WAVE="--dump-wave";;
-		c) rm -rf build;;
+		c) rm -rf build; exit 0;;
 		s) WAVE_BEGIN="$OPTARG";;
 		e) WAVE_END="$OPTARG";;
 		?) help;;
