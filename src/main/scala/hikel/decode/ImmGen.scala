@@ -53,10 +53,3 @@ class ImmGen extends RawModule {
 
 	io.imm32 := MuxLookup(io.itype, 0.U, table)
 }
-
-
-import chisel3.stage.ChiselStage
-import hikel.Config.BUILD_ARG
-object ImmGenGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new ImmGen, BUILD_ARG)
-}

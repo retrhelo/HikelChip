@@ -56,9 +56,3 @@ class RegFile extends Module {
 		}
 	}
 }
-
-
-import chisel3.stage.ChiselStage
-object RegFileGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new RegFile)
-}

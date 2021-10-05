@@ -61,19 +61,14 @@ class AxiWrite(val id: Int) extends Module {
 	io.lsu_write.ready := io.wresp.hshake
 
 	// connect to WADDR channel
-	io.waddr.bits.awaddr := io.lsu_write.bits.addr
-	io.waddr.bits.awid := id.U
-	io.waddr.bits.awlen := 0.U
-	io.waddr.bits.awsize := "b11".U
-	io.waddr.bits.awburst := Axi.BURST_INCR
+	io.waddr.bits.awaddr 	:= io.lsu_write.bits.addr
+	io.waddr.bits.awid 		:= id.U
+	io.waddr.bits.awlen 	:= 0.U
+	io.waddr.bits.awsize 	:= "b11".U
+	io.waddr.bits.awburst 	:= Axi.BURST_INCR
 
 	// connect to WDATA channel
 	io.wdata.bits.wdata := io.lsu_write.bits.wdata
 	io.wdata.bits.wstrb := io.lsu_write.bits.wstrb
 	io.wdata.bits.wlast := true.B
-}
-
-
-object AxiWriteGenVerilog extends App {
-	(new chisel3.stage.ChiselStage).emitVerilog(new AxiWrite(0))
 }

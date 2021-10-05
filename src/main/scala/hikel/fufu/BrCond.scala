@@ -5,7 +5,6 @@ package hikel.fufu
 import chisel3._
 import chisel3.util._
 
-import hikel._
 import hikel.Config._
 
 class BrCondPort extends Bundle {
@@ -41,10 +40,4 @@ class BrCond extends RawModule {
 	io.change_pc := (do_jump || do_branch) && io.in.sel
 	io.new_pc := Mux(jalr, io.in.in0 + io.in.imm, 
 			io.in.pc + io.in.imm)
-}
-
-
-import chisel3.stage.ChiselStage
-object BrCondGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new BrCond, BUILD_ARG)
 }

@@ -55,9 +55,3 @@ class Alu extends RawModule {
 
 	io.res := Mux(word, Cat(Fill(MXLEN-32, res(31)), res(31, 0)), res)
 }
-
-
-import chisel3.stage.ChiselStage
-object AluGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new Alu, BUILD_ARG)
-}

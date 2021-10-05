@@ -46,8 +46,7 @@ class MStatus extends CsrReg(CSRs.mstatus) {
 	mstatus_vec(MStatus.MPP) 	:= true.B
 
 	io.rdata 	:= mstatus_vec.asUInt
-	val result = WireInit(mstatus_vec.asUInt)
-	addSource(result, "mstatus")
+	addSource(io.rdata, "mstatus")
 
 	// update
 	val do_trap = WireInit(false.B)
@@ -72,14 +71,14 @@ class MStatus extends CsrReg(CSRs.mstatus) {
 class MEDeleg extends CsrReg(CSRs.medeleg) {
 	val medeleg = WireInit(0.U(MXLEN.W))
 
-	addSource(medeleg, "medeleg", disableDedup = true)
 	io.rdata 	:= medeleg
+	addSource(io.rdata, "medeleg", disableDedup = true)
 }
 class MIDeleg extends CsrReg(CSRs.mideleg) {
 	val mideleg = WireInit(0.U(MXLEN.W))
 
-	addSource(mideleg, "mideleg", disableDedup = true)
 	io.rdata 	:= mideleg
+	addSource(io.rdata, "mideleg", disableDedup = true)
 }
 
 object MtVec {
@@ -94,8 +93,8 @@ class MtVec extends CsrReg(CSRs.mtvec) {
 
 	val mtvec = Cat(BASE, MODE)
 
-	addSource(mtvec, "mtvec")
 	io.rdata 	:= Cat(BASE, MODE)
+	addSource(io.rdata, "mtvec")
 
 	val align = !(io.wdata(1, 0).orR)
 	when (io.wen && align) {
@@ -107,8 +106,8 @@ class MScratch extends CsrReg(CSRs.mscratch) {
 	val mscratch = RegInit(0.U(MXLEN.W))
 
 	io.rdata := mscratch
-	addSource(mscratch, "mscratch")
-	// update
+	addSource(io.rdata, "mscratch")
+
 	when (io.wen) {
 		mscratch := io.wdata
 	}
@@ -174,7 +173,7 @@ class MCause extends CsrReg(CSRs.mcause) {
 	mcause := Cat(int, Fill(MXLEN - 1 - MCause.EXCP_LEN, 0.U), excp_code)
 
 	io.rdata := mcause
-	addSource(mcause, "mcause")
+	addSource(io.rdata, "mcause")
 
 	// update
 	val do_trap = WireInit(false.B)
@@ -195,7 +194,7 @@ class MtVal extends CsrReg(CSRs.mtval) {
 	val mtval = RegInit(0.U(MXLEN.W))
 
 	io.rdata := mtval
-	addSource(mtval, "mtval", disableDedup=true)
+	addSource(io.rdata, "mtval", disableDedup = true)
 
 	when (io.wen) {
 		mtval := io.wdata
@@ -228,7 +227,7 @@ class Mip extends CsrReg(CSRs.mip) {
 	mip(MI.MEI) 	:= do_external
 
 	io.rdata := mip.asUInt
-	addSource(io.rdata, "mip", disableDedup=true)
+	addSource(io.rdata, "mip", disableDedup = true)
 }
 
 class Mie extends CsrReg(CSRs.mie) {
@@ -246,8 +245,7 @@ class Mie extends CsrReg(CSRs.mie) {
 	mie_vec(MI.MEI) := meie
 
 	io.rdata := mie_vec.asUInt
-	val result = WireInit(mie_vec.asUInt)
-	addSource(result, "mie")
+	addSource(io.rdata, "mie")
 
 	// update
 	when (io.wen) {

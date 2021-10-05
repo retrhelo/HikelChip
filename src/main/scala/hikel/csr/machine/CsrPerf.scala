@@ -17,7 +17,7 @@ class MCycle extends CsrReg(CSRs.mcycle) {
 	// connect to outside
 	io.rdata := mcycle
 	if (YSYX_DIFFTEST) {
-		addSource(mcycle, "mcycle")
+		addSource(io.rdata, "mcycle")
 	}
 
 	// update cycle
@@ -29,7 +29,7 @@ class MInstret extends CsrReg(CSRs.minstret) {
 	
 	io.rdata := minstret
 	if (YSYX_DIFFTEST) {
-		addSource(minstret, "minstret")
+		addSource(io.rdata, "minstret")
 	}
 
 	val enable = WireInit(false.B)

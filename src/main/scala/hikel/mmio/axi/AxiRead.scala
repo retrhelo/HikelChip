@@ -71,17 +71,12 @@ class AxiRead(val id: Int) extends Module {
 			reg_araddr === io.lsu_read.bits.addr
 
 	// connect to RADDR
-	io.raddr.bits.araddr := reg_araddr
-	io.raddr.bits.arid := id.U
-	io.raddr.bits.arlen := 0.U 		// number of transfer in burst transation
-	io.raddr.bits.arsize := "b11".U
-	io.raddr.bits.arburst := Axi.BURST_INCR
+	io.raddr.bits.araddr 	:= reg_araddr
+	io.raddr.bits.arid 		:= id.U
+	io.raddr.bits.arlen 	:= 0.U 		// number of transfer in burst transation
+	io.raddr.bits.arsize 	:= "b11".U
+	io.raddr.bits.arburst 	:= Axi.BURST_INCR
 
 	// connect RDATA
 	io.lsu_read.bits.rdata := io.rdata.bits.rdata
-}
-
-
-object AxiReadGenVerilog extends App {
-	(new chisel3.stage.ChiselStage).emitVerilog(new AxiRead(0))
 }

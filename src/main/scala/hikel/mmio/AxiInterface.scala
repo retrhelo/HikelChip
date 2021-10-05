@@ -54,8 +54,3 @@ class AxiInterface extends LsuUnit {
 	io.axi.wdata <> axi_write.io.wdata
 	io.axi.wresp <> axi_write.io.wresp
 }
-
-
-object AxiInterfaceGenVerilog extends App {
-	(new chisel3.stage.ChiselStage).emitVerilog(new AxiInterface)
-}

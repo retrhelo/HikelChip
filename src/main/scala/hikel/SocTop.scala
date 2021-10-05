@@ -56,7 +56,7 @@ class SocAxiPort extends Bundle {
 
 class SocTop extends Module {
 	// this is the desired name for ysyx project
-	override def desiredName: String = ""
+	override def desiredName: String = "SocTop"
 
 	val io = IO(new Bundle {
 		val interrupt = Input(Bool()) 	// external interrupt
@@ -68,22 +68,22 @@ class SocTop extends Module {
 	val lsu = Module(new Lsu)
 
 	// connect hart0 interrupt ports
-	hart0.io.int_timer := clint.io.do_timer(0)
-	hart0.io.int_soft := clint.io.do_soft(0)
-	hart0.io.int_extern := io.interrupt
+	hart0.io.int_timer 		:= clint.io.do_timer(0)
+	hart0.io.int_soft 		:= clint.io.do_soft(0)
+	hart0.io.int_extern 	:= io.interrupt
 
 	// connect hart0 with lsu
-	hart0.io.iread <> lsu.io.iread
-	hart0.io.dread <> lsu.io.dread
-	hart0.io.dwrite <> lsu.io.dwrite
+	hart0.io.iread 		<> lsu.io.iread
+	hart0.io.dread 		<> lsu.io.dread
+	hart0.io.dwrite 	<> lsu.io.dwrite
 
 	lazy val clint = Module(new Clint(1, CLINT_BASE)); {
 		lsu.io.clint <> clint.io
 	}
 	val axi_interface = Module(new AxiInterface); {
 		// connect to lsu
-		lsu.io.axi.read <> axi_interface.io.read
-		lsu.io.axi.write <> axi_interface.io.write
+		lsu.io.axi.read 	<> axi_interface.io.read
+		lsu.io.axi.write 	<> axi_interface.io.write
 
 		/* connect to AXI master port */
 
@@ -129,10 +129,10 @@ class SocTop extends Module {
 		/* add default connection for slave port to avoid output hang-up */
 		
 		// AXI4 WADDR channel
-		io.slave.awready := false.B
+		io.slave.awready 	:= false.B
 
 		// AXI4 WDATA channel
-		io.slave.wready := false.B
+		io.slave.wready 	:= false.B
 
 		// AXI4 WRESP channel
 		io.slave.bvalid 	:= false.B
@@ -153,8 +153,7 @@ class SocTop extends Module {
 
 
 object SocTopGenVerilog extends App {
-	(new chisel3.stage.ChiselStage).execute(args, Seq(
-		chisel3.stage.ChiselGeneratorAnnotation(() => new SocTop), 
+	(new chisel3.stage.ChiselStage).emitVerilog(new SocTop, BUILD_ARG, Seq(
 		firrtl.stage.RunFirrtlTransformAnnotation(new AddModulePrefix), 
 		ModulePrefixAnnotation("ysyx_210727_"), 
 	))
