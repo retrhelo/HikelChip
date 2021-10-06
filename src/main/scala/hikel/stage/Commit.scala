@@ -113,7 +113,7 @@ class Commit extends Stage {
 			reg_excp := io.in.excp
 			reg_code := io.in.code
 		}
-		io.out.excp := reg_excp || io.dwrite.bits.excp
+		io.out.excp := (reg_excp || io.dwrite.bits.excp) && !ysyx_uart_valid
 		io.out.code := Mux(reg_excp, reg_code, 
 				Mux(io.dwrite.bits.misalign, STORE_ADDR_MISALIGN, STORE_ACCE))
 
@@ -123,7 +123,14 @@ class Commit extends Stage {
 		addSource(minstret_en, "minstret_en")
 	}
 
-	// for YSYX project
+	// for ysyx simulation output
+	lazy val ysyx_uart_valid = WireInit(false.B)
+	if (YSYX_UART) {
+		ysyx_uart_valid := 0x7b.U === io.out.inst
+		addSource(ysyx_uart_valid, "ysyx_uart_valid")
+	}
+
+	// for ysyx difftest
 	if (YSYX_DIFFTEST) {
 		{	// connect to instrcommit
 			val instr = Module(new DifftestInstrCommit)

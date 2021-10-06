@@ -61,7 +61,7 @@ fi
 
 if [[ $DO_RUN = "true" ]]; then 
 	for i in ${images}; do
-		${TARGET} -i $i $DO_WAVE -b ${WAVE_BEGIN} -e ${WAVE_END}
+		${TARGET} -i $i $DO_WAVE -b ${WAVE_BEGIN} -e ${WAVE_END} --no-diff
 		if [[ $? -ne 0 ]]; then 
 			echo "failed at $i"
 			exit -1

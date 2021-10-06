@@ -21,4 +21,5 @@ object Config {
 
 	// add extra instructions to support ysyx tests
 	val YSYX_DIFFTEST 	= true
+	val YSYX_UART 		= true
 }

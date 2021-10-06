@@ -2,6 +2,7 @@ package hikel
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
 import Config._
 
@@ -54,5 +55,14 @@ class RegFile extends Module {
 		for (i <- 0 until RegFile.NUM) {
 			difftest.io.gpr(i) 	:= regfile(i)
 		}
+	}
+
+	// YSYX uart output
+	// The ysyx project, in simulation stage, uses a special instruction 
+	// for UART output. This instruction prints the context in `a0` as char 
+	// when  instruction `0x7b` is committed. 
+	if (YSYX_UART) {
+		val ysyx_uart_out = regfile(10)
+		addSource(ysyx_uart_out, "ysyx_uart_out")
 	}
 }

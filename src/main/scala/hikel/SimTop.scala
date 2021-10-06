@@ -2,6 +2,7 @@ package hikel
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils._
 
 import Config._
 import fufu._
@@ -30,9 +31,16 @@ class SimTop extends Module {
 		}
 	})
 
+	val ysyx_uart_valid = WireInit(false.B)
+	val ysyx_uart_out = WireInit(0.U(MXLEN.W))
+	if (YSYX_UART) {
+		addSink(ysyx_uart_valid, "ysyx_uart_valid")
+		addSink(ysyx_uart_out, "ysyx_uart_out")
+	}
+
 	io.uart.in.valid 	:= false.B
-	io.uart.out.valid 	:= false.B
-	io.uart.out.ch 		:= 0.U
+	io.uart.out.valid 	:= ysyx_uart_valid
+	io.uart.out.ch 		:= ysyx_uart_out(7, 0)
 
 	val reg_delay_reset = RegNext(reset.asBool)
 	withReset(reg_delay_reset) {
