@@ -71,4 +71,7 @@ class AxiWrite(val id: Int) extends Module {
 	io.wdata.bits.wdata := io.lsu_write.bits.wdata
 	io.wdata.bits.wstrb := io.lsu_write.bits.wstrb
 	io.wdata.bits.wlast := true.B
+
+	// connect to WRESP channel
+	io.lsu_write.bits.excp := Axi.RESP_OKAY =/= io.wresp.bits.bresp
 }

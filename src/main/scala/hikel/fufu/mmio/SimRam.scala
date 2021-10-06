@@ -37,11 +37,13 @@ class SimRam extends LsuUnit {
 
 	/* READ from RAM */
 	io.read.ready := true.B
+	io.read.bits.excp := false.B
 	ram.io.rIdx := raddr
 	io.read.bits.rdata := ram.io.rdata
 
 	/* WRITE to RAM */
 	io.write.ready := true.B
+	io.write.bits.excp := false.B
 	ram.io.wIdx := waddr
 	ram.io.wdata := io.write.bits.wdata
 	ram.io.wmask := io.write.bits.expand_wstrb

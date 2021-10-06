@@ -89,7 +89,7 @@ class Execute extends Stage {
 		io.hshake := !io.dread.valid || (io.dread.valid && io.dread.ready)
 		io.lsu_write := reg_uop(4) && reg_lsu_use
 
-		// generate exceptino signals
+		// generate exception signals
 		val reg_excp 	= RegInit(false.B)
 		val reg_code 	= RegInit(0.U(EXCP_LEN.W))
 		when (enable) {

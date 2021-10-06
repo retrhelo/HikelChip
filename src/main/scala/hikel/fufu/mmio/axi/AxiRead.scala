@@ -18,7 +18,7 @@ class RAddrPort extends Bundle {
 }
 
 class RDataPort extends Bundle {
-	val rresp 		= UInt(2.W)
+	val rresp 		= UInt(Axi.RESP.W)
 	val rdata 		= UInt(Axi.DATA.W)
 	val rlast 		= Bool()
 	val rid 		= UInt(Axi.ID.W)
@@ -79,4 +79,5 @@ class AxiRead(val id: Int) extends Module {
 
 	// connect RDATA
 	io.lsu_read.bits.rdata := io.rdata.bits.rdata
+	io.lsu_read.bits.excp := Axi.RESP_OKAY =/= io.rdata.bits.rresp
 }

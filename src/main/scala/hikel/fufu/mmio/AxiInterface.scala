@@ -19,6 +19,12 @@ object AxiInterface {
 
 	val BURST_FIXED = 0.U
 	val BURST_INCR = 1.U
+
+	val RESP = 2
+	val RESP_OKAY 		= "b00".U
+	val RESP_EXOKAY 	= "b01".U
+	val RESP_SLVERR 	= "b10".U
+	val RESP_DECERR 	= "b11".U
 }
 
 class AxiMasterPort extends Bundle {
