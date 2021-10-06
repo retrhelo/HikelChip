@@ -13,6 +13,7 @@ export NOOP_HOME
 export NEMU_HOME
 export DRAMSIM3_HOME
 
+# default instruction test sets
 images=`ls ${IMG_DIR}/non-output/riscv-tests/*.bin`
 images="${images} `ls ${IMG_DIR}/non-output/csr-tests/*.bin`"
 images="${images} `ls ${IMG_DIR}/non-output/riscv-tests/load/*.bin`"
@@ -23,8 +24,10 @@ images="${images} `ls ${IMG_DIR}/non-output/cpu-tests/*.bin`"
 WAVE_BEGIN=0
 WAVE_END=2000
 
+# disable difftest
+DIFFTEST_FLAG="--no-diff"
+
 help() {
-	# echo "Please remember: 指揮官、わたしがいれば十分ですよ。"
 	echo "Usage:"
 	echo "$0 [-h] [-b] [-r] [-i image] [-w] [-c] [-s wave_start] [-e wave_end]"
 	echo "Description:"
@@ -40,10 +43,11 @@ help() {
 }
 
 # Check parameters
-while getopts 'hbri:wcs:e:' OPT; do
+while getopts 'hbrdi:wcs:e:' OPT; do
 	case $OPT in
 		h) help;;
 		b) DO_BUILD="true";;
+		d) DIFFTEST_FLAG="";;
 		r) DO_RUN="true";;
 		i) images="$OPTARG";;
 		w) DO_WAVE="--dump-wave";;
@@ -61,7 +65,7 @@ fi
 
 if [[ $DO_RUN = "true" ]]; then 
 	for i in ${images}; do
-		${TARGET} -i $i $DO_WAVE -b ${WAVE_BEGIN} -e ${WAVE_END} --no-diff
+		${TARGET} -i $i $DO_WAVE -b ${WAVE_BEGIN} -e ${WAVE_END} ${DIFFTEST_FLAG}
 		if [[ $? -ne 0 ]]; then 
 			echo "failed at $i"
 			exit -1
