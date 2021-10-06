@@ -6,8 +6,8 @@ import chisel3._
 import chisel3.util._
 
 import hikel.Config._
-import hikel.mmio._
-import hikel.mmio.MemLayout._
+import hikel.fufu.mmio._
+import hikel.fufu.mmio.MemLayout._
 import hikel.csr.machine.MCause._
 import hikel.util.ReadyValid
 

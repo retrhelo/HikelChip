@@ -1,11 +1,11 @@
 // READ part of Axi4 interface
 
-package hikel.mmio.axi
+package hikel.fufu.mmio.axi
 
 import chisel3._
 import chisel3.util._
 
-import hikel.mmio.{AxiInterface => Axi}
+import hikel.fufu.mmio.{AxiInterface => Axi}
 import hikel.util.ReadyValid
 import hikel.fufu.{LsuUnitRead}
 

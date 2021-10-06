@@ -7,12 +7,12 @@ import chisel3.util._
 
 import Config._
 import fufu._
-import mmio._
-import mmio.axi.{
+import fufu.mmio._
+import fufu.mmio.MemLayout._
+import fufu.mmio.axi.{
 	RAddrPort, RDataPort, 
 	WAddrPort, WDataPort, WRespPort, 
 }
-import mmio.MemLayout._
 import util.ReadyValid
 
 import difftest._
