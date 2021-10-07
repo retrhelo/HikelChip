@@ -1,3 +1,5 @@
+ID = 210727
+
 # generate verilog code for simulation
 sim-verilog:
 	mill -i __.test.runMain hikel.SimTopGenVerilog
@@ -8,6 +10,9 @@ sim-verilog:
 
 soc-verilog:
 	mill -i __.test.runMain hikel.SocTopGenVerilog
+	sed -i 's/ysyx_$(ID)_SocTop/ysyx_$(ID)/g' build/SocTop.v
+	cp build/SocTop.v soc/vsrc/ysyx_$(ID).v
+	make -C soc
 
 # below are works for testing code compiling
 

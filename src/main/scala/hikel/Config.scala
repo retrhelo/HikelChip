@@ -20,6 +20,7 @@ object Config {
 	val BUILD_ARG 	= Array("-td", "./build")
 
 	// add extra instructions to support ysyx tests
-	val YSYX_DIFFTEST 	= true
-	val YSYX_UART 		= true
+	val YSYX_DIFFTEST 	= false
+	val YSYX_UART 		= false
+	// val YSYX_UART = true
 }

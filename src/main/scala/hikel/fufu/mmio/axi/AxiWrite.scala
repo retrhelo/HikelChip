@@ -64,7 +64,9 @@ class AxiWrite(val id: Int) extends Module {
 	io.waddr.bits.awaddr 	:= io.lsu_write.bits.addr
 	io.waddr.bits.awid 		:= id.U
 	io.waddr.bits.awlen 	:= 0.U
-	io.waddr.bits.awsize 	:= "b11".U
+	// io.waddr.bits.awsize 	:= "b11".U
+	// io.waddr.bits.awsize 	:= "b10".U
+	io.waddr.bits.awsize := io.lsu_write.bits.op(1, 0)
 	io.waddr.bits.awburst 	:= Axi.BURST_INCR
 
 	// connect to WDATA channel

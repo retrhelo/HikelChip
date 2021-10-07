@@ -90,6 +90,7 @@ object InstDecode {
 		CSRRWI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N, N), 
 		CSRRSI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N, N), 
 		CSRRCI -> List(N, N, N, N, N, N, N, N, Y, N, N, N, Y, IMM_Z, N, N, N, N, N), 
+		FENCE_I-> List(N, N, N, N, N, N, N, N, N, N, N, N, N, IMM_X, N, N, N, N, N), 
 	)
 }
 import InstDecode._

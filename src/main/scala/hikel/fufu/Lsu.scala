@@ -38,6 +38,7 @@ class LsuUnitRead extends Bundle {
 			"b110".U -> (rdata >> 48), 
 			"b111".U -> (rdata >> 56), 
 		))
+		// tmp := rdata
 
 		MuxLookup(width, tmp, Array(
 			"b00".U -> Cat(Fill(MXLEN - 8, tmp(7) & signed), tmp(7, 0)), 
@@ -51,6 +52,7 @@ class LsuUnitWrite extends Bundle {
 	val addr 	= Output(UInt(Lsu.ADDR.W))
 	val wdata 	= Output(UInt(Lsu.DATA.W))
 	val wstrb 	= Output(UInt(Lsu.MASK.W))
+	val op 		= Output(UInt(3.W))
 	// exception while writing
 	val excp 	= Input(Bool())
 
@@ -238,12 +240,14 @@ class Lsu extends Module {
 	io.clint.write.bits.addr := write.bits.addr
 	io.clint.write.bits.wdata := write.bits.data
 	io.clint.write.bits.wstrb := write.bits.genStrb
+	io.clint.write.bits.op := write.bits.op
 	io.clint.write.valid := wen_clint
 
 	// connect to RAM
 	io.axi.write.bits.addr := write.bits.addr
 	io.axi.write.bits.wdata := write.bits.genData
 	io.axi.write.bits.wstrb := write.bits.genStrb
+	io.axi.write.bits.op := write.bits.op
 	io.axi.write.valid := wen_axi
 
 	// select output signals

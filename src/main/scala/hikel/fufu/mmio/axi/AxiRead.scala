@@ -74,7 +74,9 @@ class AxiRead(val id: Int) extends Module {
 	io.raddr.bits.araddr 	:= reg_araddr
 	io.raddr.bits.arid 		:= id.U
 	io.raddr.bits.arlen 	:= 0.U 		// number of transfer in burst transation
-	io.raddr.bits.arsize 	:= "b11".U
+	// io.raddr.bits.arsize 	:= "b11".U
+	io.raddr.bits.arsize 	:= io.lsu_read.bits.op(1, 0)
+	// io.raddr.bits.arsize 	:= "b10".U
 	io.raddr.bits.arburst 	:= Axi.BURST_INCR
 
 	// connect RDATA

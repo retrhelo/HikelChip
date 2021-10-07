@@ -43,7 +43,7 @@ help() {
 }
 
 # Check parameters
-while getopts 'hbrdi:wcs:e:' OPT; do
+while getopts 'hbrdi:wcs:e:o' OPT; do
 	case $OPT in
 		h) help;;
 		b) DO_BUILD="true";;
@@ -59,7 +59,6 @@ while getopts 'hbrdi:wcs:e:' OPT; do
 done
 
 if [[ $DO_BUILD = "true" ]]; then 
-	# make -C ${DIFF_DIR} NOOP_HOME=${NOOP_HOME} EMU_TRACE=1
 	make -C ${DIFF_DIR} NOOP_HOME=${NOOP_HOME} DRAMSIM3_HOME=${DRAMSIM3_HOME} EMU_TRACE=1 WITH_DRAMSIM3=1
 fi
 

@@ -40,7 +40,7 @@ class TrapCtrl extends RawModule {
 		val do_timer = mie(MI.MTI).asBool && mip(MI.MTI).asBool
 		val do_extern = mie(MI.MEI).asBool && mip(MI.MEI).asBool
 		// It's very interesting that `soft` is a keyword in Verilog... 
-		// Hence we have to use `do_soft` instead. 
+		// Hence we have to use `do_soft` instead to avoid conflict with Verilator compiler. 
 		val do_soft = mie(MI.MSI).asBool && mip(MI.MSI).asBool
 
 		do_interrupt := mstatus(MStatus.MIE).asBool && (do_timer || do_extern || do_soft)
