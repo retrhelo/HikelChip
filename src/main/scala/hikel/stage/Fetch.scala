@@ -76,7 +76,7 @@ class Fetch extends Stage {
 		// connect to Decode
 		val data = io.iread.bits.data
 		// io.out.inst := data(31, 0)
-		io.out.inst := Mux(io.hshake, io.iread.bits.data(31, 0), reg_inst)
+		io.out.inst := Mux(io.hshake, io.iread.bits.data(31, 0), reg_inst) 	// is this necessary?
 		io.out.pc := reg_pc
 		io.out.valid := true.B
 

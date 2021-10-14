@@ -80,29 +80,21 @@ class HikelCore(val hartid: Int) extends Module {
 
 	// decode
 	decode.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
-	// decode.io.clear := brcond.io.change_pc || commit.io.mret || lsu_write
-	// decode.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	decode.io.clear := brcond.io.change_pc || lsu_write
 	decode.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// issue
 	issue.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
-	// issue.io.clear := brcond.io.change_pc || commit.io.mret
-	// issue.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	issue.io.clear := brcond.io.change_pc
 	issue.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// execute
 	execute.io.enable := execute.io.hshake && commit.io.hshake
-	// execute.io.clear := commit.io.mret || !fetch.io.hshake
-	// execute.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	execute.io.clear := !fetch.io.hshake
 	execute.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// commit
 	commit.io.enable := commit.io.hshake
-	// commit.io.clear := commit.io.mret || !execute.io.hshake
-	// commit.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	commit.io.clear := !execute.io.hshake
 	commit.io.trap := trapctrl.io.do_trap || commit.io.mret
 
@@ -128,10 +120,4 @@ class HikelCore(val hartid: Int) extends Module {
 	trapctrl.io.excp.do_excp 	:= commit.io.out.excp
 	trapctrl.io.excp.code 		:= commit.io.out.code
 	trapctrl.io.inst_done 		:= commit.io.out.valid && commit.io.hshake
-}
-
-
-import chisel3.stage.ChiselStage
-object HikelCoreGenVerilog extends App {
-	(new ChiselStage).emitVerilog(new HikelCore(0))
 }
