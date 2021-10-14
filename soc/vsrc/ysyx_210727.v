@@ -24,35 +24,35 @@ module ysyx_210727_Fetch(
   reg [31:0] _RAND_0;
   reg [31:0] _RAND_1;
 `endif // RANDOMIZE_REG_INIT
-  reg [31:0] reg_pc_1; // @[Fetch.scala 40:37]
-  wire [31:0] next_pc = reg_pc_1 + 32'h4; // @[Fetch.scala 41:38]
-  wire [31:0] _GEN_5 = io_enable ? next_pc : reg_pc_1; // @[Fetch.scala 56:36 Fetch.scala 57:32 Fetch.scala 40:37]
+  reg [31:0] reg_pc_1; // @[Fetch.scala 44:37]
+  wire [31:0] next_pc = reg_pc_1 + 32'h4; // @[Fetch.scala 45:38]
+  wire [31:0] _GEN_5 = io_enable ? next_pc : reg_pc_1; // @[Fetch.scala 60:36 Fetch.scala 61:32 Fetch.scala 44:37]
   wire [31:0] mepc = mepc_0[31:0];
   wire [31:0] mtvec = mtvec_0[31:0];
-  reg [31:0] reg_inst_1; // @[Fetch.scala 67:39]
-  assign io_iread_bits_addr = {{32'd0}, reg_pc_1}; // @[Fetch.scala 62:36]
-  assign io_iread_valid = 1'h1; // @[Fetch.scala 61:32]
-  assign io_hshake = ~io_iread_valid | io_iread_valid & io_iread_ready; // @[Fetch.scala 65:46]
-  assign io_out_pc = reg_pc_1; // @[Fetch.scala 76:27]
-  assign io_out_excp = io_iread_bits_excp; // @[Fetch.scala 80:29]
-  assign io_out_code = io_iread_bits_misalign ? 4'h0 : 4'h1; // @[Fetch.scala 81:35]
-  assign io_out_inst = io_hshake ? io_iread_bits_data[31:0] : reg_inst_1; // @[Fetch.scala 75:35]
+  reg [31:0] reg_inst_1; // @[Fetch.scala 71:39]
+  assign io_iread_bits_addr = {{32'd0}, reg_pc_1}; // @[Fetch.scala 66:36]
+  assign io_iread_valid = 1'h1; // @[Fetch.scala 65:32]
+  assign io_hshake = ~io_iread_valid | io_iread_valid & io_iread_ready; // @[Fetch.scala 69:46]
+  assign io_out_pc = reg_pc_1; // @[Fetch.scala 80:27]
+  assign io_out_excp = io_iread_bits_excp; // @[Fetch.scala 84:29]
+  assign io_out_code = io_iread_bits_misalign ? 4'h0 : 4'h1; // @[Fetch.scala 85:35]
+  assign io_out_inst = io_hshake ? io_iread_bits_data[31:0] : reg_inst_1; // @[Fetch.scala 79:35]
   always @(posedge clock) begin
-    if (reset) begin // @[Fetch.scala 40:37]
-      reg_pc_1 <= 32'h30000000; // @[Fetch.scala 40:37]
-    end else if (io_trap) begin // @[Fetch.scala 47:32]
-      reg_pc_1 <= mtvec; // @[Fetch.scala 48:32]
-    end else if (io_mret) begin // @[Fetch.scala 50:37]
-      reg_pc_1 <= mepc; // @[Fetch.scala 51:32]
-    end else if (io_change_pc) begin // @[Fetch.scala 53:42]
-      reg_pc_1 <= io_new_pc; // @[Fetch.scala 54:32]
+    if (reset) begin // @[Fetch.scala 44:37]
+      reg_pc_1 <= 32'h30000000; // @[Fetch.scala 44:37]
+    end else if (io_trap) begin // @[Fetch.scala 51:32]
+      reg_pc_1 <= mtvec; // @[Fetch.scala 52:32]
+    end else if (io_mret) begin // @[Fetch.scala 54:37]
+      reg_pc_1 <= mepc; // @[Fetch.scala 55:32]
+    end else if (io_change_pc) begin // @[Fetch.scala 57:42]
+      reg_pc_1 <= io_new_pc; // @[Fetch.scala 58:32]
     end else begin
       reg_pc_1 <= _GEN_5;
     end
-    if (reset) begin // @[Fetch.scala 67:39]
-      reg_inst_1 <= 32'h0; // @[Fetch.scala 67:39]
-    end else if (io_hshake) begin // @[Fetch.scala 68:34]
-      reg_inst_1 <= io_iread_bits_data[31:0]; // @[Fetch.scala 69:34]
+    if (reset) begin // @[Fetch.scala 71:39]
+      reg_inst_1 <= 32'h0; // @[Fetch.scala 71:39]
+    end else if (io_hshake) begin // @[Fetch.scala 72:34]
+      reg_inst_1 <= io_iread_bits_data[31:0]; // @[Fetch.scala 73:34]
     end
   end
 // Register and memory initialization
@@ -2241,6 +2241,7 @@ module ysyx_210727_TrapCtrl(
   input         io__excp_do_excp,
   input  [3:0]  io__excp_code,
   output        io__do_trap,
+  input         io__inst_done,
   input  [63:0] mip_0,
   output        io_do_trap,
   output        mcause_int_0,
@@ -2248,17 +2249,16 @@ module ysyx_210727_TrapCtrl(
   output [3:0]  mcause_code_0,
   input  [63:0] mie_0
 );
-  wire  mstatus_ie = mstatus_0[3]; // @[TrapCtrl.scala 28:33]
-  wire  do_timer = mie_0[7] & mip_0[7]; // @[TrapCtrl.scala 40:51]
-  wire  do_extern = mie_0[11] & mip_0[11]; // @[TrapCtrl.scala 41:52]
-  wire  do_soft = mie_0[3] & mip_0[3]; // @[TrapCtrl.scala 44:50]
-  wire  do_interrupt = mstatus_ie & (do_timer | do_extern | do_soft); // @[TrapCtrl.scala 46:61]
-  wire [3:0] _int_code_T = do_timer ? 4'h7 : 4'h0; // @[TrapCtrl.scala 50:36]
-  wire [3:0] _int_code_T_1 = do_soft ? 4'h3 : _int_code_T; // @[TrapCtrl.scala 49:36]
-  wire [3:0] int_code = do_extern ? 4'h3 : _int_code_T_1; // @[TrapCtrl.scala 48:32]
-  wire [3:0] mcause_code = io__excp_do_excp ? io__excp_code : int_code; // @[TrapCtrl.scala 59:27]
-  wire  mcause_int = ~io__excp_do_excp & do_interrupt; // @[TrapCtrl.scala 60:40]
-  assign io__do_trap = io__excp_do_excp | do_interrupt; // @[TrapCtrl.scala 52:39]
+  wire  mstatus_ie = mstatus_0[3]; // @[TrapCtrl.scala 31:33]
+  wire  do_timer = mie_0[7] & mip_0[7]; // @[TrapCtrl.scala 43:51]
+  wire  do_extern = mie_0[11] & mip_0[11]; // @[TrapCtrl.scala 44:52]
+  wire  do_soft = mie_0[3] & mip_0[3]; // @[TrapCtrl.scala 47:50]
+  wire  do_interrupt = mstatus_ie & (do_timer | do_extern | do_soft); // @[TrapCtrl.scala 49:44]
+  wire [3:0] _int_code_T = do_soft ? 4'h3 : 4'h7; // @[TrapCtrl.scala 52:36]
+  wire [3:0] int_code = do_extern ? 4'h3 : _int_code_T; // @[TrapCtrl.scala 51:32]
+  wire [3:0] mcause_code = io__excp_do_excp ? io__excp_code : int_code; // @[TrapCtrl.scala 63:27]
+  wire  mcause_int = ~io__excp_do_excp & do_interrupt; // @[TrapCtrl.scala 64:40]
+  assign io__do_trap = (io__excp_do_excp | do_interrupt) & io__inst_done; // @[TrapCtrl.scala 56:57]
   assign io_do_trap = io__do_trap;
   assign mcause_int_0 = mcause_int;
   assign mcause_code_0 = mcause_code;
@@ -3430,6 +3430,7 @@ module ysyx_210727_HikelCore(
   wire  trapctrl_io__excp_do_excp; // @[HikelCore.scala 127:35]
   wire [3:0] trapctrl_io__excp_code; // @[HikelCore.scala 127:35]
   wire  trapctrl_io__do_trap; // @[HikelCore.scala 127:35]
+  wire  trapctrl_io__inst_done; // @[HikelCore.scala 127:35]
   wire [63:0] trapctrl_mip_0; // @[HikelCore.scala 127:35]
   wire  trapctrl_io_do_trap; // @[HikelCore.scala 127:35]
   wire  trapctrl_mcause_int_0; // @[HikelCore.scala 127:35]
@@ -3461,7 +3462,6 @@ module ysyx_210727_HikelCore(
   wire  _lsu_write_T_1 = _lsu_write_T | execute_io__lsu_write; // @[HikelCore.scala 117:44]
   wire  fetch_io_enable_lsu_write = _lsu_write_T_1 | commit_io__lsu_write; // @[HikelCore.scala 118:46]
   wire  _decode_io_enable_T = execute_io__hshake & commit_io__hshake; // @[HikelCore.scala 82:47]
-  wire  _decode_io_trap_T = trapctrl_io__do_trap | commit_io__mret; // @[HikelCore.scala 86:48]
   ysyx_210727_Fetch fetch ( // @[HikelCore.scala 29:41]
     .clock(fetch_clock),
     .reset(fetch_reset),
@@ -3709,6 +3709,7 @@ module ysyx_210727_HikelCore(
     .io__excp_do_excp(trapctrl_io__excp_do_excp),
     .io__excp_code(trapctrl_io__excp_code),
     .io__do_trap(trapctrl_io__do_trap),
+    .io__inst_done(trapctrl_io__inst_done),
     .mip_0(trapctrl_mip_0),
     .io_do_trap(trapctrl_io_do_trap),
     .mcause_int_0(trapctrl_mcause_int_0),
@@ -3750,7 +3751,7 @@ module ysyx_210727_HikelCore(
   assign fetch_clock = clock;
   assign fetch_reset = reset;
   assign fetch_io_enable = fetch_io_hshake & execute_io__hshake & commit_io__hshake & ~fetch_io_enable_lsu_write; // @[HikelCore.scala 77:85]
-  assign fetch_io_trap = trapctrl_io__do_trap & commit_io__hshake; // @[HikelCore.scala 79:46]
+  assign fetch_io_trap = trapctrl_io__do_trap; // @[HikelCore.scala 79:23]
   assign fetch_io_iread_bits_excp = io_iread_bits_excp; // @[HikelCore.scala 50:24]
   assign fetch_io_iread_bits_misalign = io_iread_bits_misalign; // @[HikelCore.scala 50:24]
   assign fetch_io_iread_bits_data = io_iread_bits_data; // @[HikelCore.scala 50:24]
@@ -3764,7 +3765,7 @@ module ysyx_210727_HikelCore(
   assign decode_reset = reset;
   assign decode_io_enable = execute_io__hshake & commit_io__hshake & fetch_io_hshake; // @[HikelCore.scala 82:67]
   assign decode_io_clear = fetch_io_change_pc_brcond_io_change_pc | fetch_io_enable_lsu_write; // @[HikelCore.scala 85:48]
-  assign decode_io_trap = (trapctrl_io__do_trap | commit_io__mret) & commit_io__hshake; // @[HikelCore.scala 86:67]
+  assign decode_io_trap = trapctrl_io__do_trap | commit_io__mret; // @[HikelCore.scala 86:47]
   assign decode_io_in_pc = fetch_io_out_pc; // @[HikelCore.scala 43:22]
   assign decode_io_in_excp = fetch_io_out_excp; // @[HikelCore.scala 43:22]
   assign decode_io_in_code = fetch_io_out_code; // @[HikelCore.scala 43:22]
@@ -3773,7 +3774,7 @@ module ysyx_210727_HikelCore(
   assign issue_reset = reset;
   assign issue_io_enable = _decode_io_enable_T & fetch_io_hshake; // @[HikelCore.scala 89:66]
   assign issue_io_clear = fetch_io_change_pc_brcond_io_change_pc; // @[HikelCore.scala 92:24]
-  assign issue_io_trap = _decode_io_trap_T & commit_io__hshake; // @[HikelCore.scala 93:66]
+  assign issue_io_trap = trapctrl_io__do_trap | commit_io__mret; // @[HikelCore.scala 93:46]
   assign issue_io_regfile_read_0_data = regfile_io_read_0_data; // @[HikelCore.scala 61:25]
   assign issue_io_regfile_read_1_data = regfile_io_read_1_data; // @[HikelCore.scala 61:25]
   assign issue_io_csrfile_read_data = csrfile_io_read_data; // @[HikelCore.scala 111:31]
@@ -3810,7 +3811,7 @@ module ysyx_210727_HikelCore(
   assign execute_reset = reset;
   assign execute_io__enable = execute_io__hshake & commit_io__hshake; // @[HikelCore.scala 96:48]
   assign execute_io__clear = ~fetch_io_hshake; // @[HikelCore.scala 99:29]
-  assign execute_io__trap = _decode_io_trap_T & commit_io__hshake; // @[HikelCore.scala 100:68]
+  assign execute_io__trap = trapctrl_io__do_trap | commit_io__mret; // @[HikelCore.scala 100:48]
   assign execute_io__alu_res = alu_io_res; // @[HikelCore.scala 67:16]
   assign execute_io__dread_bits_excp = io_dread_bits_excp; // @[HikelCore.scala 68:26]
   assign execute_io__dread_bits_misalign = io_dread_bits_misalign; // @[HikelCore.scala 68:26]
@@ -3834,7 +3835,7 @@ module ysyx_210727_HikelCore(
   assign commit_reset = reset;
   assign commit_io__enable = commit_io__hshake; // @[HikelCore.scala 103:26]
   assign commit_io__clear = ~execute_io__hshake; // @[HikelCore.scala 106:28]
-  assign commit_io__trap = _decode_io_trap_T & commit_io__hshake; // @[HikelCore.scala 107:67]
+  assign commit_io__trap = trapctrl_io__do_trap | commit_io__mret; // @[HikelCore.scala 107:47]
   assign commit_io__dwrite_bits_excp = io_dwrite_bits_excp; // @[HikelCore.scala 72:26]
   assign commit_io__dwrite_bits_misalign = io_dwrite_bits_misalign; // @[HikelCore.scala 72:26]
   assign commit_io__dwrite_ready = io_dwrite_ready; // @[HikelCore.scala 72:26]
@@ -3868,6 +3869,7 @@ module ysyx_210727_HikelCore(
   assign alu_io_in_in1 = execute_io__alu_in_in1; // @[HikelCore.scala 67:16]
   assign trapctrl_io__excp_do_excp = commit_io__out_excp; // @[HikelCore.scala 128:41]
   assign trapctrl_io__excp_code = commit_io__out_code; // @[HikelCore.scala 129:41]
+  assign trapctrl_io__inst_done = commit_io__out_valid & commit_io__hshake; // @[HikelCore.scala 130:64]
   assign trapctrl_mip_0 = csrfile_mip_0;
   assign trapctrl_mstatus_0 = csrfile_mstatus_0;
   assign trapctrl_mie_0 = csrfile_mie_0;
@@ -4157,59 +4159,44 @@ module ysyx_210727_Clint(
   input  [63:0] io_write_bits_wdata,
   input  [7:0]  io_write_bits_wstrb,
   input         io_write_valid,
-  output        io_do_soft_0,
   output        io_do_timer_0
 );
 `ifdef RANDOMIZE_REG_INIT
-  reg [31:0] _RAND_0;
+  reg [63:0] _RAND_0;
   reg [63:0] _RAND_1;
   reg [31:0] _RAND_2;
-  reg [63:0] _RAND_3;
 `endif // RANDOMIZE_REG_INIT
-  reg  reg_msip_0; // @[Clint.scala 39:31]
-  reg [63:0] reg_mtimecmp_0; // @[Clint.scala 40:35]
-  reg  reg_timer_0; // @[Clint.scala 41:32]
-  reg [63:0] reg_mtime; // @[Clint.scala 42:32]
-  wire  _GEN_0 = reg_mtimecmp_0 == reg_mtime | reg_timer_0; // @[Clint.scala 46:54 Clint.scala 47:38 Clint.scala 41:32]
-  wire [63:0] _reg_mtime_T_1 = reg_mtime + 64'h1; // @[Clint.scala 50:32]
-  wire [12:0] raddr = io_read_bits_addr[15:3]; // @[Clint.scala 66:38]
-  wire [22:0] _GEN_7 = {{10'd0}, raddr}; // @[Clint.scala 68:38]
-  wire  ren_msip_0 = _GEN_7 == 23'h400000; // @[Clint.scala 68:38]
-  wire [63:0] _io_read_bits_rdata_T = {32'h0,31'h0,reg_msip_0}; // @[Cat.scala 30:58]
-  wire [63:0] _GEN_1 = ren_msip_0 ? _io_read_bits_rdata_T : 64'h0; // @[Clint.scala 69:36 Clint.scala 70:44 Clint.scala 65:28]
-  wire  ren_mtimecmp_0 = _GEN_7 == 23'h400800; // @[Clint.scala 77:42]
-  wire [63:0] _GEN_2 = ren_mtimecmp_0 ? reg_mtimecmp_0 : _GEN_1; // @[Clint.scala 78:40 Clint.scala 79:44]
-  wire  ren_mtime = _GEN_7 == 23'h4017ff; // @[Clint.scala 82:28]
-  wire [12:0] waddr = io_write_bits_addr[15:3]; // @[Clint.scala 93:39]
-  wire [22:0] _GEN_10 = {{10'd0}, waddr}; // @[Clint.scala 95:57]
-  wire  wen_msip_0 = io_write_valid & _GEN_10 == 23'h400000; // @[Clint.scala 95:47]
-  wire  _wen_mtimecmp_0_T_2 = &io_write_bits_wstrb; // @[Clint.scala 107:53]
-  wire  wen_mtimecmp_0 = io_write_valid & _GEN_10 == 23'h400800 & _wen_mtimecmp_0_T_2; // @[Clint.scala 106:80]
-  assign io_read_bits_rdata = ren_mtime ? reg_mtime : _GEN_2; // @[Clint.scala 83:26 Clint.scala 84:36]
-  assign io_do_soft_0 = reg_msip_0; // @[Clint.scala 54:31]
-  assign io_do_timer_0 = reg_timer_0; // @[Clint.scala 55:32]
+  reg [63:0] reg_mtimecmp_0; // @[Clint.scala 38:35]
+  reg [63:0] reg_mtime; // @[Clint.scala 39:32]
+  reg  reg_do_timer_0; // @[Clint.scala 40:35]
+  wire [63:0] _reg_mtime_T_1 = reg_mtime + 64'h1; // @[Clint.scala 43:32]
+  wire  _GEN_0 = reg_mtimecmp_0 == reg_mtime | reg_do_timer_0; // @[Clint.scala 45:54 Clint.scala 46:41 Clint.scala 40:35]
+  wire [28:0] raddr = io_read_bits_addr[31:3]; // @[Clint.scala 63:39]
+  wire  ren_mtimecmp_0 = raddr == 29'h400800; // @[Clint.scala 65:42]
+  wire [63:0] _GEN_1 = ren_mtimecmp_0 ? reg_mtimecmp_0 : 64'h0; // @[Clint.scala 66:40 Clint.scala 67:44 Clint.scala 62:28]
+  wire  ren_mtime = raddr == 29'h4017ff; // @[Clint.scala 70:28]
+  wire [28:0] waddr = io_write_bits_addr[31:3]; // @[Clint.scala 80:40]
+  wire  _wen_mtimecmp_0_T_2 = &io_write_bits_wstrb; // @[Clint.scala 83:53]
+  wire  wen_mtimecmp_0 = io_write_valid & waddr == 29'h400800 & _wen_mtimecmp_0_T_2; // @[Clint.scala 82:80]
+  assign io_read_bits_rdata = ren_mtime ? reg_mtime : _GEN_1; // @[Clint.scala 71:26 Clint.scala 72:36]
+  assign io_do_timer_0 = reg_do_timer_0; // @[Clint.scala 53:33]
   always @(posedge clock) begin
-    if (reset) begin // @[Clint.scala 39:31]
-      reg_msip_0 <= 1'h0; // @[Clint.scala 39:31]
-    end else if (wen_msip_0 & io_write_bits_wstrb[0]) begin // @[Clint.scala 96:69]
-      reg_msip_0 <= io_write_bits_wdata[0]; // @[Clint.scala 97:41]
+    if (reset) begin // @[Clint.scala 38:35]
+      reg_mtimecmp_0 <= 64'h0; // @[Clint.scala 38:35]
+    end else if (wen_mtimecmp_0) begin // @[Clint.scala 84:40]
+      reg_mtimecmp_0 <= io_write_bits_wdata; // @[Clint.scala 86:41]
+    end
+    if (reset) begin // @[Clint.scala 39:32]
+      reg_mtime <= 64'h0; // @[Clint.scala 39:32]
+    end else begin
+      reg_mtime <= _reg_mtime_T_1; // @[Clint.scala 43:19]
     end
     if (reset) begin // @[Clint.scala 40:35]
-      reg_mtimecmp_0 <= 64'h0; // @[Clint.scala 40:35]
-    end else if (wen_mtimecmp_0) begin // @[Clint.scala 108:40]
-      reg_mtimecmp_0 <= io_write_bits_wdata; // @[Clint.scala 110:41]
-    end
-    if (reset) begin // @[Clint.scala 41:32]
-      reg_timer_0 <= 1'h0; // @[Clint.scala 41:32]
-    end else if (wen_mtimecmp_0) begin // @[Clint.scala 108:40]
-      reg_timer_0 <= 1'h0; // @[Clint.scala 109:38]
+      reg_do_timer_0 <= 1'h0; // @[Clint.scala 40:35]
+    end else if (wen_mtimecmp_0) begin // @[Clint.scala 84:40]
+      reg_do_timer_0 <= 1'h0; // @[Clint.scala 85:41]
     end else begin
-      reg_timer_0 <= _GEN_0;
-    end
-    if (reset) begin // @[Clint.scala 42:32]
-      reg_mtime <= 64'h0; // @[Clint.scala 42:32]
-    end else begin
-      reg_mtime <= _reg_mtime_T_1; // @[Clint.scala 50:19]
+      reg_do_timer_0 <= _GEN_0;
     end
   end
 // Register and memory initialization
@@ -4248,14 +4235,12 @@ initial begin
       `endif
     `endif
 `ifdef RANDOMIZE_REG_INIT
-  _RAND_0 = {1{`RANDOM}};
-  reg_msip_0 = _RAND_0[0:0];
+  _RAND_0 = {2{`RANDOM}};
+  reg_mtimecmp_0 = _RAND_0[63:0];
   _RAND_1 = {2{`RANDOM}};
-  reg_mtimecmp_0 = _RAND_1[63:0];
+  reg_mtime = _RAND_1[63:0];
   _RAND_2 = {1{`RANDOM}};
-  reg_timer_0 = _RAND_2[0:0];
-  _RAND_3 = {2{`RANDOM}};
-  reg_mtime = _RAND_3[63:0];
+  reg_do_timer_0 = _RAND_2[0:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
@@ -4288,38 +4273,38 @@ module ysyx_210727_AxiRead(
   reg [31:0] _RAND_1;
   reg [31:0] _RAND_2;
 `endif // RANDOMIZE_REG_INIT
-  reg [31:0] reg_araddr; // @[AxiRead.scala 49:33]
-  reg  reg_arvalid; // @[AxiRead.scala 50:34]
-  reg  reg_rready; // @[AxiRead.scala 51:33]
+  reg [31:0] reg_araddr; // @[AxiRead.scala 50:33]
+  reg  reg_arvalid; // @[AxiRead.scala 51:34]
+  reg  reg_rready; // @[AxiRead.scala 52:33]
   wire  _T_3 = io_raddr_valid & io_raddr_ready; // @[ReadyValid.scala 15:28]
   wire  _T_4 = io_rdata_valid & io_rdata_ready; // @[ReadyValid.scala 15:28]
-  wire  _T_5 = _T_4 & io_rdata_bits_rlast; // @[AxiRead.scala 62:44]
-  wire  _GEN_0 = _T_4 & io_rdata_bits_rlast ? 1'h0 : reg_rready; // @[AxiRead.scala 62:68 AxiRead.scala 63:36 AxiRead.scala 51:33]
-  wire  _GEN_1 = _T_3 ? 1'h0 : reg_arvalid; // @[AxiRead.scala 58:45 AxiRead.scala 59:37 AxiRead.scala 50:34]
-  wire  _GEN_2 = _T_3 | _GEN_0; // @[AxiRead.scala 58:45 AxiRead.scala 60:36]
-  wire  _GEN_4 = ~(reg_arvalid | reg_rready) & io_lsu_read_valid | _GEN_1; // @[AxiRead.scala 53:74 AxiRead.scala 56:37]
-  wire  _io_lsu_read_ready_T_2 = reg_araddr == io_lsu_read_bits_addr; // @[AxiRead.scala 71:36]
-  assign io_raddr_bits_araddr = reg_araddr; // @[AxiRead.scala 74:33]
-  assign io_raddr_bits_arsize = {{1'd0}, io_lsu_read_bits_op[1:0]}; // @[AxiRead.scala 78:55]
-  assign io_raddr_valid = reg_arvalid; // @[AxiRead.scala 68:24]
-  assign io_rdata_ready = reg_rready; // @[AxiRead.scala 69:24]
-  assign io_lsu_read_bits_rdata = io_rdata_bits_rdata; // @[AxiRead.scala 83:32]
-  assign io_lsu_read_bits_excp = 2'h0 != io_rdata_bits_rresp; // @[AxiRead.scala 84:48]
-  assign io_lsu_read_ready = _T_5 & _io_lsu_read_ready_T_2; // @[AxiRead.scala 70:69]
+  wire  _T_5 = _T_4 & io_rdata_bits_rlast; // @[AxiRead.scala 63:44]
+  wire  _GEN_0 = _T_4 & io_rdata_bits_rlast ? 1'h0 : reg_rready; // @[AxiRead.scala 63:68 AxiRead.scala 64:36 AxiRead.scala 52:33]
+  wire  _GEN_1 = _T_3 ? 1'h0 : reg_arvalid; // @[AxiRead.scala 59:45 AxiRead.scala 60:37 AxiRead.scala 51:34]
+  wire  _GEN_2 = _T_3 | _GEN_0; // @[AxiRead.scala 59:45 AxiRead.scala 61:36]
+  wire  _GEN_4 = ~(reg_arvalid | reg_rready) & io_lsu_read_valid | _GEN_1; // @[AxiRead.scala 54:74 AxiRead.scala 57:37]
+  wire  _io_lsu_read_ready_T_2 = reg_araddr == io_lsu_read_bits_addr; // @[AxiRead.scala 72:36]
+  assign io_raddr_bits_araddr = reg_araddr; // @[AxiRead.scala 75:33]
+  assign io_raddr_bits_arsize = {{1'd0}, io_lsu_read_bits_op[1:0]}; // @[AxiRead.scala 86:60]
+  assign io_raddr_valid = reg_arvalid; // @[AxiRead.scala 69:24]
+  assign io_rdata_ready = reg_rready; // @[AxiRead.scala 70:24]
+  assign io_lsu_read_bits_rdata = io_rdata_bits_rdata; // @[AxiRead.scala 90:32]
+  assign io_lsu_read_bits_excp = 2'h0 != io_rdata_bits_rresp; // @[AxiRead.scala 91:48]
+  assign io_lsu_read_ready = _T_5 & _io_lsu_read_ready_T_2; // @[AxiRead.scala 71:69]
   always @(posedge clock) begin
-    if (reset) begin // @[AxiRead.scala 49:33]
-      reg_araddr <= 32'h0; // @[AxiRead.scala 49:33]
-    end else if (~(reg_arvalid | reg_rready) & io_lsu_read_valid) begin // @[AxiRead.scala 53:74]
-      reg_araddr <= io_lsu_read_bits_addr; // @[AxiRead.scala 55:36]
+    if (reset) begin // @[AxiRead.scala 50:33]
+      reg_araddr <= 32'h0; // @[AxiRead.scala 50:33]
+    end else if (~(reg_arvalid | reg_rready) & io_lsu_read_valid) begin // @[AxiRead.scala 54:74]
+      reg_araddr <= io_lsu_read_bits_addr; // @[AxiRead.scala 56:36]
     end
-    if (reset) begin // @[AxiRead.scala 50:34]
-      reg_arvalid <= 1'h0; // @[AxiRead.scala 50:34]
+    if (reset) begin // @[AxiRead.scala 51:34]
+      reg_arvalid <= 1'h0; // @[AxiRead.scala 51:34]
     end else begin
       reg_arvalid <= _GEN_4;
     end
-    if (reset) begin // @[AxiRead.scala 51:33]
-      reg_rready <= 1'h0; // @[AxiRead.scala 51:33]
-    end else if (!(~(reg_arvalid | reg_rready) & io_lsu_read_valid)) begin // @[AxiRead.scala 53:74]
+    if (reset) begin // @[AxiRead.scala 52:33]
+      reg_rready <= 1'h0; // @[AxiRead.scala 52:33]
+    end else if (!(~(reg_arvalid | reg_rready) & io_lsu_read_valid)) begin // @[AxiRead.scala 54:74]
       reg_rready <= _GEN_2;
     end
   end
@@ -4399,35 +4384,35 @@ module ysyx_210727_AxiWrite(
   reg [31:0] _RAND_0;
   reg [31:0] _RAND_1;
 `endif // RANDOMIZE_REG_INIT
-  reg  reg_aw_w_valid; // @[AxiWrite.scala 39:37]
-  reg  reg_bready; // @[AxiWrite.scala 40:33]
-  wire  _T_2 = ~(reg_aw_w_valid | reg_bready) & io_lsu_write_valid; // @[AxiWrite.scala 42:55]
+  reg  reg_aw_w_valid; // @[AxiWrite.scala 40:37]
+  reg  reg_bready; // @[AxiWrite.scala 41:33]
+  wire  _T_2 = ~(reg_aw_w_valid | reg_bready) & io_lsu_write_valid; // @[AxiWrite.scala 43:55]
   wire  _T_3 = io_waddr_valid & io_waddr_ready; // @[ReadyValid.scala 15:28]
   wire  _T_4 = io_wdata_valid & io_wdata_ready; // @[ReadyValid.scala 15:28]
   wire  _T_6 = io_wresp_valid & io_wresp_ready; // @[ReadyValid.scala 15:28]
-  wire  _GEN_0 = _T_6 ? 1'h0 : reg_bready; // @[AxiWrite.scala 52:45 AxiWrite.scala 53:36 AxiWrite.scala 40:33]
-  wire  _GEN_1 = _T_3 & _T_4 ? 1'h0 : reg_aw_w_valid; // @[AxiWrite.scala 48:64 AxiWrite.scala 49:40 AxiWrite.scala 39:37]
-  wire  _GEN_2 = _T_3 & _T_4 | _GEN_0; // @[AxiWrite.scala 48:64 AxiWrite.scala 50:36]
-  wire  _GEN_3 = _T_2 | _GEN_1; // @[AxiWrite.scala 44:17 AxiWrite.scala 45:40]
-  assign io_waddr_bits_awaddr = io_lsu_write_bits_addr; // @[AxiWrite.scala 64:33]
-  assign io_waddr_bits_awsize = {{1'd0}, io_lsu_write_bits_op[1:0]}; // @[AxiWrite.scala 69:53]
-  assign io_waddr_valid = reg_aw_w_valid; // @[AxiWrite.scala 58:24]
-  assign io_wdata_bits_wdata = io_lsu_write_bits_wdata; // @[AxiWrite.scala 73:29]
-  assign io_wdata_bits_wstrb = io_lsu_write_bits_wstrb; // @[AxiWrite.scala 74:29]
-  assign io_wdata_valid = reg_aw_w_valid; // @[AxiWrite.scala 59:24]
-  assign io_wresp_ready = reg_bready; // @[AxiWrite.scala 60:24]
-  assign io_lsu_write_bits_excp = 2'h0 != io_wresp_bits_bresp; // @[AxiWrite.scala 78:49]
+  wire  _GEN_0 = _T_6 ? 1'h0 : reg_bready; // @[AxiWrite.scala 53:45 AxiWrite.scala 54:36 AxiWrite.scala 41:33]
+  wire  _GEN_1 = _T_3 & _T_4 ? 1'h0 : reg_aw_w_valid; // @[AxiWrite.scala 49:64 AxiWrite.scala 50:40 AxiWrite.scala 40:37]
+  wire  _GEN_2 = _T_3 & _T_4 | _GEN_0; // @[AxiWrite.scala 49:64 AxiWrite.scala 51:36]
+  wire  _GEN_3 = _T_2 | _GEN_1; // @[AxiWrite.scala 45:17 AxiWrite.scala 46:40]
+  assign io_waddr_bits_awaddr = io_lsu_write_bits_addr; // @[AxiWrite.scala 65:33]
+  assign io_waddr_bits_awsize = {{1'd0}, io_lsu_write_bits_op[1:0]}; // @[AxiWrite.scala 76:61]
+  assign io_waddr_valid = reg_aw_w_valid; // @[AxiWrite.scala 59:24]
+  assign io_wdata_bits_wdata = io_lsu_write_bits_wdata; // @[AxiWrite.scala 80:29]
+  assign io_wdata_bits_wstrb = io_lsu_write_bits_wstrb; // @[AxiWrite.scala 81:29]
+  assign io_wdata_valid = reg_aw_w_valid; // @[AxiWrite.scala 60:24]
+  assign io_wresp_ready = reg_bready; // @[AxiWrite.scala 61:24]
+  assign io_lsu_write_bits_excp = 2'h0 != io_wresp_bits_bresp; // @[AxiWrite.scala 85:49]
   assign io_lsu_write_ready = io_wresp_valid & io_wresp_ready; // @[ReadyValid.scala 15:28]
   always @(posedge clock) begin
-    if (reset) begin // @[AxiWrite.scala 39:37]
-      reg_aw_w_valid <= 1'h0; // @[AxiWrite.scala 39:37]
+    if (reset) begin // @[AxiWrite.scala 40:37]
+      reg_aw_w_valid <= 1'h0; // @[AxiWrite.scala 40:37]
     end else begin
       reg_aw_w_valid <= _GEN_3;
     end
-    if (reset) begin // @[AxiWrite.scala 40:33]
-      reg_bready <= 1'h0; // @[AxiWrite.scala 40:33]
-    end else if (_T_2) begin // @[AxiWrite.scala 44:17]
-      reg_bready <= 1'h0; // @[AxiWrite.scala 46:36]
+    if (reset) begin // @[AxiWrite.scala 41:33]
+      reg_bready <= 1'h0; // @[AxiWrite.scala 41:33]
+    end else if (_T_2) begin // @[AxiWrite.scala 45:17]
+      reg_bready <= 1'h0; // @[AxiWrite.scala 47:36]
     end else begin
       reg_bready <= _GEN_2;
     end
@@ -4767,7 +4752,6 @@ module ysyx_210727(
   wire [63:0] clint_io_write_bits_wdata; // @[SocTop.scala 80:32]
   wire [7:0] clint_io_write_bits_wstrb; // @[SocTop.scala 80:32]
   wire  clint_io_write_valid; // @[SocTop.scala 80:32]
-  wire  clint_io_do_soft_0; // @[SocTop.scala 80:32]
   wire  clint_io_do_timer_0; // @[SocTop.scala 80:32]
   wire  axi_interface_clock; // @[SocTop.scala 83:35]
   wire  axi_interface_reset; // @[SocTop.scala 83:35]
@@ -4880,7 +4864,6 @@ module ysyx_210727(
     .io_write_bits_wdata(clint_io_write_bits_wdata),
     .io_write_bits_wstrb(clint_io_write_bits_wstrb),
     .io_write_valid(clint_io_write_valid),
-    .io_do_soft_0(clint_io_do_soft_0),
     .io_do_timer_0(clint_io_do_timer_0)
   );
   ysyx_210727_AxiInterface axi_interface ( // @[SocTop.scala 83:35]
@@ -4962,7 +4945,7 @@ module ysyx_210727(
   assign hart0_io_dwrite_bits_excp = lsu_io_dwrite_bits_excp; // @[SocTop.scala 78:33]
   assign hart0_io_dwrite_bits_misalign = lsu_io_dwrite_bits_misalign; // @[SocTop.scala 78:33]
   assign hart0_io_dwrite_ready = lsu_io_dwrite_ready; // @[SocTop.scala 78:33]
-  assign hart0_io_int_soft = clint_io_do_soft_0; // @[SocTop.scala 72:41]
+  assign hart0_io_int_soft = 1'h0; // @[SocTop.scala 72:41]
   assign hart0_io_int_timer = clint_io_do_timer_0; // @[SocTop.scala 71:41]
   assign hart0_io_int_extern = io_interrupt; // @[SocTop.scala 73:33]
   assign lsu_io_iread_bits_addr = hart0_io_iread_bits_addr; // @[SocTop.scala 76:33]
