@@ -30,8 +30,7 @@ CSR_SRC = \
 	$(CSR_DIR)/csr.S \
 	$(CSR_DIR)/exception.S \
 	$(CSR_DIR)/ecall.S \
-	$(CSR_DIR)/exception2.S \
-	$(CSR_DIR)/clint.S
+	$(CSR_DIR)/exception2.S 
 SRC += $(CSR_SRC)
 
 OBJ = $(addsuffix .o, $(basename $(SRC)))

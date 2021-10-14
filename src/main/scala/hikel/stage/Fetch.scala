@@ -33,8 +33,12 @@ class Fetch extends Stage {
 	enable := io.enable
 	rst := reset.asBool || io.clear
 
-	// private val ENTRY_PC = "h8000_0000".U(PC.W)
-	private val ENTRY_PC = "h3000_0000".U(PC.W)
+	private val ENTRY_PC = if (YSYX_DIFFTEST) {
+		"h8000_0000".U(PC.W)
+	}
+	else {
+		"h3000_0000".U(PC.W)
+	}
 
 	withReset(rst) {
 		val reg_pc = RegInit(ENTRY_PC)

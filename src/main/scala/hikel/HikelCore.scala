@@ -76,35 +76,35 @@ class HikelCore(val hartid: Int) extends Module {
 	// fetch
 	fetch.io.enable := fetch.io.hshake && execute.io.hshake && commit.io.hshake && !lsu_write
 	fetch.io.clear := false.B
-	fetch.io.trap := trapctrl.io.do_trap && commit.io.hshake
+	fetch.io.trap := trapctrl.io.do_trap
 
 	// decode
 	decode.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
 	// decode.io.clear := brcond.io.change_pc || commit.io.mret || lsu_write
 	// decode.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	decode.io.clear := brcond.io.change_pc || lsu_write
-	decode.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
+	decode.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// issue
 	issue.io.enable := execute.io.hshake && commit.io.hshake && fetch.io.hshake
 	// issue.io.clear := brcond.io.change_pc || commit.io.mret
 	// issue.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	issue.io.clear := brcond.io.change_pc
-	issue.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
+	issue.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// execute
 	execute.io.enable := execute.io.hshake && commit.io.hshake
 	// execute.io.clear := commit.io.mret || !fetch.io.hshake
 	// execute.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	execute.io.clear := !fetch.io.hshake
-	execute.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
+	execute.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// commit
 	commit.io.enable := commit.io.hshake
 	// commit.io.clear := commit.io.mret || !execute.io.hshake
 	// commit.io.trap := trapctrl.io.do_trap && commit.io.hshake
 	commit.io.clear := !execute.io.hshake
-	commit.io.trap := (trapctrl.io.do_trap || commit.io.mret) && commit.io.hshake
+	commit.io.trap := trapctrl.io.do_trap || commit.io.mret
 
 	// CSR
 	private val csrfile = Module(new CsrFile(hartid))
@@ -127,6 +127,7 @@ class HikelCore(val hartid: Int) extends Module {
 	lazy val trapctrl = Module(new TrapCtrl)
 	trapctrl.io.excp.do_excp 	:= commit.io.out.excp
 	trapctrl.io.excp.code 		:= commit.io.out.code
+	trapctrl.io.inst_done 		:= commit.io.out.valid && commit.io.hshake
 }
 
 

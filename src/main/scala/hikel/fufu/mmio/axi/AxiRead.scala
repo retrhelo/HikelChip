@@ -5,6 +5,7 @@ package hikel.fufu.mmio.axi
 import chisel3._
 import chisel3.util._
 
+import hikel.Config.YSYX_DIFFTEST
 import hikel.fufu.mmio.{AxiInterface => Axi}
 import hikel.util.ReadyValid
 import hikel.fufu.{LsuUnitRead}
@@ -75,9 +76,15 @@ class AxiRead(val id: Int) extends Module {
 	io.raddr.bits.arid 		:= id.U
 	io.raddr.bits.arlen 	:= 0.U 		// number of transfer in burst transation
 	// io.raddr.bits.arsize 	:= "b11".U
-	io.raddr.bits.arsize 	:= io.lsu_read.bits.op(1, 0)
+	// io.raddr.bits.arsize 	:= io.lsu_read.bits.op(1, 0)
 	// io.raddr.bits.arsize 	:= "b10".U
 	io.raddr.bits.arburst 	:= Axi.BURST_INCR
+	if (YSYX_DIFFTEST) {
+		io.raddr.bits.arsize := "b11".U
+	}
+	else {
+		io.raddr.bits.arsize := io.lsu_read.bits.op(1, 0)
+	}
 
 	// connect RDATA
 	io.lsu_read.bits.rdata := io.rdata.bits.rdata

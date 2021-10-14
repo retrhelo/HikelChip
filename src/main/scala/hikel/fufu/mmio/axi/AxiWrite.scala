@@ -3,6 +3,7 @@ package hikel.fufu.mmio.axi
 import chisel3._
 import chisel3.util._
 
+import hikel.Config.YSYX_DIFFTEST
 import hikel.fufu.mmio.{AxiInterface => Axi}
 import hikel.util.ReadyValid
 import hikel.fufu.{LsuUnitWrite}
@@ -66,8 +67,14 @@ class AxiWrite(val id: Int) extends Module {
 	io.waddr.bits.awlen 	:= 0.U
 	// io.waddr.bits.awsize 	:= "b11".U
 	// io.waddr.bits.awsize 	:= "b10".U
-	io.waddr.bits.awsize := io.lsu_write.bits.op(1, 0)
+	// io.waddr.bits.awsize := io.lsu_write.bits.op(1, 0)
 	io.waddr.bits.awburst 	:= Axi.BURST_INCR
+	if (YSYX_DIFFTEST) {
+		io.waddr.bits.awsize := "b11".U
+	}
+	else {
+		io.waddr.bits.awsize := io.lsu_write.bits.op(1, 0)
+	}
 
 	// connect to WDATA channel
 	io.wdata.bits.wdata := io.lsu_write.bits.wdata

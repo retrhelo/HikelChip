@@ -1,4 +1,4 @@
-// The control unit of trap
+// The trap control unit
 
 package hikel
 
@@ -17,6 +17,9 @@ class TrapExcp extends Bundle {
 class TrapCtrlPort extends Bundle {
 	val excp 		= Input(new TrapExcp)
 	val do_trap 	= Output(Bool())
+
+	// is Commit stage's instruction is done
+	val inst_done 	= Input(Bool())
 }
 
 class TrapCtrl extends RawModule {
@@ -25,7 +28,7 @@ class TrapCtrl extends RawModule {
 	// connect to mstatus
 	val mstatus = WireInit(0.U(MXLEN.W))
 	addSink(mstatus, "mstatus")
-	val mstatus_ie = mstatus(MStatus.MIE)
+	val mstatus_ie = mstatus(MStatus.MIE).asBool()
 
 	// connect to mie/mip
 	val mie = WireInit(0.U(MXLEN.W))
@@ -39,17 +42,18 @@ class TrapCtrl extends RawModule {
 	{
 		val do_timer = mie(MI.MTI).asBool && mip(MI.MTI).asBool
 		val do_extern = mie(MI.MEI).asBool && mip(MI.MEI).asBool
-		// It's very interesting that `soft` is a keyword in Verilog... 
-		// Hence we have to use `do_soft` instead to avoid conflict with Verilator compiler. 
+		// It's very interesting that `soft` is a keyword in Verilog...
+		// Hence we have to use `do_soft` instead to avoid conflict with this rule
 		val do_soft = mie(MI.MSI).asBool && mip(MI.MSI).asBool
 
-		do_interrupt := mstatus(MStatus.MIE).asBool && (do_timer || do_extern || do_soft)
+		do_interrupt := mstatus_ie && (do_timer || do_extern || do_soft)
 		// the priority is extern > soft > timer
 		int_code := Mux(do_extern, MCause.MSINT, 
 				Mux(do_soft, MCause.MSINT, 
-				Mux(do_timer, MCause.MTINT, 0.U)))
+				MCause.MTINT))
 	}
-	io.do_trap := io.excp.do_excp || do_interrupt
+
+	io.do_trap := (io.excp.do_excp || do_interrupt) && io.inst_done
 	addSource(io.do_trap, "do_trap")
 
 	// connect to mcause
